@@ -1,0 +1,1752 @@
+Worked for 13s
+
+Excellent. Now we have a clear direction for Acadence.
+
+I recommend approaching this as a proper software engineering project rather than simply asking Freebuff to generate a website.
+
+We will make Freebuff work as an entire software development team, with clearly defined responsibilities, documentation standards, architectural rules and implementation phases.
+
+I have three important objectives for this project:
+
+1. **Documentation first:** Freebuff must produce the complete professional product and engineering documentation before writing application code.
+2. **Architecture second:** It must analyse and finalize the Next.js + Supabase + Vercel architecture.
+3. **Implementation third:** It must build Acadence incrementally, testing and documenting every phase before moving to the next.
+
+I have also examined your dashboard reference image.
+
+# PART 1 — The technology stack we are adopting
+
+This is now the proposed official technology stack for Acadence.
+
+| Component | Technology |
+|---|---|
+| Frontend | Next.js |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| UI Components | shadcn/ui |
+| Icons | Lucide React |
+| Charts | Recharts |
+| Backend | Next.js Server-side Architecture |
+| Database | Supabase PostgreSQL |
+| Authentication | Supabase Auth |
+| Authorization | PostgreSQL RLS |
+| File Storage | Supabase Storage |
+| Background Jobs | Supabase Queues / Background Workers |
+| Scheduling Engine | TypeScript initially |
+| Advanced Optimization | Python + Google OR-Tools when needed |
+| Deployment | Vercel |
+| Version Control | GitHub |
+| Email | Resend |
+| AI Integration | Server-side AI API integration |
+
+One important architectural decision: we will use a **modular monolith**, not microservices.
+
+Python will be introduced as a separate scheduling/optimization worker only when the complexity justifies it.
+
+---
+
+# PART 2 — Your Acadence UI/UX design direction
+
+Your uploaded image will serve as the primary visual design reference.
+
+image_group{"query":["dark navy modern SaaS admin dashboard sidebar analytics cards","dark theme premium enterprise admin dashboard UI","modern dark dashboard data visualization interface"]}
+
+I want Freebuff to reproduce the visual language of your reference image throughout Acadence.
+
+### Design characteristics to reproduce
+
+| Element | Design direction |
+|---|---|
+| Overall theme | Dark navy |
+| Main background | Deep navy/blue |
+| Sidebar | Fixed dark vertical sidebar |
+| Navigation | Icon-based navigation with expandable sections |
+| Top navigation | Minimal topbar with search and notifications |
+| Dashboard cards | Rounded cards with subtle contrast |
+| Charts | Modern charts with blue and complementary accent colours |
+| Typography | Clean modern sans-serif |
+| Buttons | Rounded modern buttons |
+| Icons | Consistent Lucide icons |
+| Layout | Spacious, organized dashboard |
+| Responsiveness | Desktop, tablet and mobile |
+
+### Important design instruction
+
+I don't want Acadence to look like an e-commerce dashboard.
+
+We are borrowing the **visual design system**, not the content or functionality.
+
+For example:
+
+- Sales analytics become academic analytics.
+- Product sales become timetable statistics.
+- Earnings become institution statistics.
+- CRM becomes institution management.
+- Customers become students and lecturers.
+
+The result should look like a premium enterprise academic management platform.
+
+I recommend making dark mode the default theme while also supporting light mode.
+
+---
+
+# PART 3 — MASTER PROMPT 1: Complete product documentation
+
+**This is the first prompt you should give Freebuff.**
+
+Before using it:
+
+1. Create a GitHub repository called `acadence`.
+2. Open the repository in Freebuff.
+3. Attach your existing Acadence System Architecture & Developer Guide PDF.
+4. Attach the dashboard reference image.
+5. Give Freebuff the following prompt.
+
+The first task is documentation. It must not start implementing the application.
+
+:::writing{variant="document" title="Acadence — Master Product Documentation Generation Prompt" id="83192"}
+# ACADENCE
+## MASTER PRODUCT DOCUMENTATION GENERATION PROMPT
+
+### 1. YOUR ROLE
+
+You are an elite multidisciplinary software product development, business analysis, enterprise architecture and technical documentation team.
+
+You are responsible for planning and documenting a complete, production-ready, multi-institution academic scheduling and learning SaaS platform called ACADENCE.
+
+You must perform the responsibilities of:
+
+1. Senior Product Manager.
+2. Business Analyst.
+3. Enterprise Software Architect.
+4. Senior Full-Stack Engineer.
+5. Database Architect.
+6. UI/UX Designer.
+7. Cybersecurity Architect.
+8. DevOps Engineer.
+9. Quality Assurance Engineer.
+10. Technical Documentation Specialist.
+11. AI Systems Engineer.
+12. SaaS Business Strategist.
+
+Your work must meet professional software engineering documentation standards.
+
+Do not produce superficial documentation.
+
+Every document must contain sufficient detail to guide actual software implementation.
+
+---
+
+### 2. PRODUCT OVERVIEW
+
+Product name: ACADENCE.
+
+Product category: Academic Scheduling, Administration and AI-Powered Learning SaaS Platform.
+
+Product description:
+
+Acadence is a modern, intelligent, multi-institution academic scheduling and learning management platform designed to help universities, colleges, polytechnics and other higher education institutions manage academic operations.
+
+The platform will provide centralized academic administration, timetable management, classroom allocation, lecturer workload management, academic calendars, attendance integrations, AI-powered learning resources and institutional analytics.
+
+The platform must support a gradual expansion model:
+
+Department → Faculty → Institution → Multiple Institutions.
+
+Acadence must be designed as a commercial SaaS product capable of serving multiple independent educational institutions.
+
+---
+
+### 3. PRODUCT VISION
+
+Build an intelligent academic management ecosystem that simplifies academic scheduling, improves institutional efficiency, reduces administrative workload and provides students and lecturers with reliable academic information.
+
+Acadence should become a trusted academic operations platform for educational institutions in Nigeria and eventually internationally.
+
+---
+
+### 4. CORE PRODUCT MODULES
+
+Document all the following modules comprehensively.
+
+#### A. Platform Administration
+- Platform super administrator.
+- Institution registration and provisioning.
+- Institution approval.
+- Institution subscription management.
+- Global platform configuration.
+- Platform analytics.
+- Support management.
+- System audit logs.
+
+#### B. Institution Management
+- Institution profiles.
+- Multiple campuses.
+- Faculties.
+- Departments.
+- Academic hierarchy.
+- Institution settings.
+- Institution branding.
+- Institution administrators.
+- Institutional onboarding.
+
+#### C. User Management
+- Students.
+- Lecturers.
+- Faculty administrators.
+- Department administrators.
+- Institution administrators.
+- Platform administrators.
+- User invitations.
+- Account activation.
+- Role assignment.
+- Permission management.
+- User imports.
+
+#### D. Academic Administration
+- Academic sessions.
+- Semesters.
+- Academic calendars.
+- Faculties.
+- Departments.
+- Programmes.
+- Courses.
+- Course registration information.
+- Course assignments.
+- Student groups.
+- Lecturer assignments.
+
+#### E. Classroom and Facilities Management
+- Campuses.
+- Buildings.
+- Classrooms.
+- Lecture halls.
+- Laboratory rooms.
+- Room capacity.
+- Room equipment.
+- Room availability.
+- Room allocation.
+- Room utilization reports.
+
+#### F. Timetable Management
+- Manual timetable creation.
+- Timetable editing.
+- Timetable imports.
+- Draft timetables.
+- Timetable publishing.
+- Timetable version history.
+- Timetable filtering.
+- Lecturer timetable.
+- Student timetable.
+- Department timetable.
+- Faculty timetable.
+- Classroom timetable.
+- Timetable change requests.
+
+#### G. Intelligent Timetable Generation
+Design an intelligent scheduling engine capable of generating timetables using institutional constraints.
+
+Consider:
+- Lecturer availability.
+- Lecturer workload.
+- Classroom capacity.
+- Classroom suitability.
+- Student group availability.
+- Course duration.
+- Course frequency.
+- Academic working days.
+- Time-slot availability.
+- Institution-specific scheduling rules.
+- Examination periods.
+- Fixed scheduling requirements.
+
+Distinguish between hard constraints and soft constraints.
+
+The engine must never publish a timetable that violates mandatory hard constraints.
+
+Document optimization strategies and future integration possibilities with Python and Google OR-Tools.
+
+#### H. Conflict Detection
+- Lecturer scheduling conflicts.
+- Classroom conflicts.
+- Student group conflicts.
+- Time overlaps.
+- Capacity violations.
+- Room suitability violations.
+- Workload violations.
+- Conflict reporting.
+- Conflict resolution suggestions.
+
+#### I. Lecturer Workload Management
+- Course assignments.
+- Teaching hours.
+- Workload calculations.
+- Workload limits.
+- Overload warnings.
+- Lecturer workload reports.
+- Workload approvals.
+
+#### J. Academic Calendar
+- Academic sessions.
+- Semesters.
+- Teaching weeks.
+- Holidays.
+- Examination periods.
+- Registration deadlines.
+- Academic events.
+- Institutional calendar management.
+
+#### K. Attendance Management
+- Attendance records.
+- Attendance imports.
+- Integration interfaces.
+- Attendance reporting.
+- Student attendance history.
+- Authorized attendance management.
+
+#### L. Notifications
+- In-app notifications.
+- Timetable change notifications.
+- Academic announcements.
+- Email notifications.
+- Lecturer notifications.
+- Student notifications.
+- Notification preferences.
+
+#### M. AI Learning Assistant
+- AI-generated study guides.
+- Course summaries.
+- Study notes.
+- Practice questions.
+- Worked examples.
+- Revision plans.
+- Formula sheets.
+- Course-material-based responses.
+- Usage limits.
+- AI credit management.
+
+#### N. Document Generation
+- PDF study materials.
+- Downloadable academic documents.
+- AI-generated learning resources.
+- Document history.
+- Lecturer review and approval.
+- Source tracking.
+
+#### O. Analytics and Reporting
+- Institutional analytics.
+- Department analytics.
+- Room utilization.
+- Lecturer workload.
+- Timetable conflicts.
+- Attendance statistics.
+- Academic activity.
+- Usage analytics.
+
+#### P. Commercial and Subscription Management
+- Subscription plans.
+- Institution subscriptions.
+- Subscription renewals.
+- AI credits.
+- Payment integration.
+- Payment references.
+- Billing history.
+- Subscription limits.
+- Premium features.
+
+---
+
+### 5. TARGET USERS AND ROLES
+
+Define the permissions, responsibilities and user journeys for:
+
+1. Platform Super Admin.
+2. Institution Admin.
+3. Faculty Admin.
+4. Department Admin.
+5. Lecturer.
+6. Student.
+7. Support/Onboarding Operator.
+
+Implement a proper Role-Based Access Control strategy.
+
+A user may belong to multiple institutions through explicitly authorized memberships.
+
+Institution data must remain isolated.
+
+---
+
+### 6. OFFICIAL TECHNOLOGY DIRECTION
+
+The proposed architecture is:
+
+Frontend:
+- Next.js.
+- TypeScript.
+- Tailwind CSS.
+- shadcn/ui.
+- Lucide React.
+- Recharts.
+
+Application backend:
+- Next.js server-side architecture.
+- Server Actions where appropriate.
+- Route Handlers.
+- Service layer.
+- Server-side validation.
+
+Database:
+- Supabase PostgreSQL.
+
+Authentication:
+- Supabase Auth.
+
+Authorization:
+- PostgreSQL Row Level Security.
+- Server-side authorization checks.
+
+Storage:
+- Supabase Storage.
+
+Deployment:
+- Vercel.
+
+Version control:
+- GitHub.
+
+Email:
+- Resend.
+
+Scheduling optimization:
+- TypeScript initially.
+- Python and Google OR-Tools when justified.
+
+IMPORTANT:
+
+This is the proposed technology direction, not permission to skip architecture analysis.
+
+You must evaluate it against Acadence's requirements and identify technical limitations, cost considerations and necessary adjustments before implementation.
+
+Do not introduce unnecessary technologies.
+
+---
+
+### 7. DOCUMENTATION TO GENERATE
+
+Create the following professional documents.
+
+#### PRODUCT AND BUSINESS DOCUMENTATION
+
+01. Product Charter / Product Lifecycle Document (PLC).
+02. Product Vision and Strategy Document.
+03. Product Requirements Document (PRD).
+04. Business Requirements Document (BRD).
+05. Business Model and Monetization Strategy.
+06. Stakeholder Analysis.
+07. User Personas.
+08. User Journey Documentation.
+09. Product Scope and Feature Catalogue.
+10. Product Roadmap.
+
+#### SOFTWARE ENGINEERING DOCUMENTATION
+
+11. Software Requirements Specification (SRS).
+12. Software Design Document (SDD).
+13. System Architecture Document.
+14. Database Design Document (DDD).
+15. Entity Relationship Diagram (ERD).
+16. Database Data Dictionary.
+17. API Design and Specification.
+18. Authentication and Authorization Specification.
+19. Multi-Tenancy Architecture Specification.
+20. Business Logic and Workflow Specification.
+21. Scheduling Engine Technical Specification.
+22. Conflict Detection Specification.
+
+#### DESIGN DOCUMENTATION
+
+23. UI/UX Design Document (UXDD).
+24. Design System Specification.
+25. Component Library Specification.
+26. Navigation and Information Architecture.
+27. Responsive Design Specification.
+28. Accessibility Requirements.
+29. Dashboard Design Specification.
+30. Wireframe and Screen Inventory.
+
+#### SECURITY AND QUALITY DOCUMENTATION
+
+31. Security Requirements Specification.
+32. Threat Model.
+33. Data Privacy and Protection Specification.
+34. Testing Strategy.
+35. Test Plan.
+36. Test Cases and Acceptance Criteria.
+37. Performance Requirements.
+38. Backup and Disaster Recovery Plan.
+39. Logging and Monitoring Specification.
+40. Quality Assurance Plan.
+
+#### IMPLEMENTATION AND OPERATIONS DOCUMENTATION
+
+41. Technical Implementation Roadmap.
+42. Git and Branching Strategy.
+43. Project Folder Structure.
+44. Development Environment Setup Guide.
+45. Deployment Architecture.
+46. CI/CD Strategy.
+47. Environment Variables Specification.
+48. Database Migration Strategy.
+49. Developer Onboarding Guide.
+50. System Maintenance and Operations Guide.
+51. User Administration Guide.
+52. API Integration Guide.
+53. Third-Party Integration Specification.
+54. Risk Register.
+55. Architecture Decision Records (ADR).
+
+Add other documents that are genuinely necessary for a professional enterprise SaaS implementation.
+
+---
+
+### 8. DOCUMENTATION QUALITY REQUIREMENTS
+
+Every document must:
+
+- Have a clear title.
+- Have a document identifier.
+- Have a version number.
+- Have a creation date.
+- Have an owner.
+- Include revision history.
+- Include a table of contents where appropriate.
+- Use professional terminology.
+- Contain detailed requirements.
+- Define assumptions.
+- Identify dependencies.
+- Define acceptance criteria where applicable.
+- Reference related documents.
+- Avoid contradictions with other documents.
+
+Requirements must have unique identifiers.
+
+For example:
+
+FR-AUTH-001
+FR-TT-001
+FR-ROOM-001
+NFR-SEC-001
+
+Maintain traceability between requirements, design decisions, implementation modules and test cases.
+
+Do not invent institutional policies or assume every university has identical academic rules.
+
+Where configurable business rules are required, document them as configurable settings.
+
+---
+
+### 9. DOCUMENT STORAGE
+
+Create this directory:
+
+docs/
+
+Organize the documents into:
+
+docs/
+  01-product/
+  02-business/
+  03-requirements/
+  04-architecture/
+  05-database/
+  06-api/
+  07-ui-ux/
+  08-security/
+  09-testing/
+  10-implementation/
+  11-deployment/
+  12-operations/
+  13-adr/
+
+Generate the documents as Markdown files.
+
+Generate diagrams using Mermaid where appropriate.
+
+Generate the ERD in Mermaid or another maintainable diagram format.
+
+Do not put all documentation into one enormous file.
+
+Create an index document:
+
+docs/README.md
+
+It must link to every generated document.
+
+---
+
+### 10. EXISTING DOCUMENTATION
+
+I will provide an existing document titled:
+
+Acadence System Architecture & Step-by-Step Developer Guide.
+
+Treat it as the existing product and architectural reference.
+
+Preserve its important product requirements, workflows, domain concepts, expansion strategy and business model.
+
+However, the previous Flask and MySQL technology recommendations are superseded by the proposed Next.js, Supabase and Vercel direction, subject to your architecture review.
+
+Do not discard useful requirements simply because the technical stack is changing.
+
+---
+
+### 11. UI/UX REFERENCE
+
+I will also provide a dashboard screenshot.
+
+Use it as the primary visual design reference.
+
+Reproduce its visual design characteristics:
+
+- Dark navy background.
+- Fixed vertical sidebar.
+- Modern icon-based navigation.
+- Expandable sidebar sections.
+- Minimal top navigation.
+- Search.
+- Notification icons.
+- User profile menu.
+- Rounded dashboard cards.
+- Modern analytics charts.
+- Blue accent colours.
+- Premium enterprise SaaS appearance.
+- Clean spacing and typography.
+
+Adapt all content to Acadence.
+
+Do not copy e-commerce terminology or functionality.
+
+The screenshot is a visual reference, not a replacement for Acadence's functional requirements.
+
+Create a consistent design system that can be applied across all user portals.
+
+Support desktop, tablet and mobile.
+
+---
+
+### 12. WORKING RULES
+
+You must follow these rules:
+
+1. Do not start coding the application.
+2. Do not create incomplete placeholder documentation.
+3. Do not silently omit any required document.
+4. Do not invent unsupported business requirements.
+5. Identify ambiguities and record them in an assumptions and open-questions register.
+6. Keep all documents consistent.
+7. Use diagrams wherever they improve understanding.
+8. Make the documents implementation-ready.
+9. Maintain requirement traceability.
+10. Do not change the agreed product identity.
+
+If a document depends on a decision that cannot yet be made, record the decision as pending and explain its impact.
+
+---
+
+### 13. FINAL DELIVERABLE
+
+Your first milestone is complete only when:
+
+- All required documents have been created.
+- All documents are stored in the correct directories.
+- The documentation index is complete.
+- The ERD exists.
+- The system architecture diagrams exist.
+- The UI/UX specification is complete.
+- The implementation roadmap is complete.
+- Requirements are traceable.
+- Contradictions and unresolved decisions are documented.
+
+At the end, provide a documentation completion report.
+
+Do not begin implementation until I explicitly approve the documentation and architecture.
+:::
+
+---
+
+# PART 4 — MASTER PROMPT 2: Architecture analysis and finalization
+
+After Freebuff finishes the documentation, give it this second prompt.
+
+This prompt is important because we want Freebuff to identify architectural weaknesses before implementation.
+
+:::writing{variant="document" title="Acadence — Architecture Analysis and Finalization Prompt" id="62931"}
+# ACADENCE
+## SYSTEM ARCHITECTURE ANALYSIS AND FINALIZATION
+
+You are now acting as the Principal Software Architect for Acadence.
+
+Your responsibility is to examine the complete product documentation and produce the definitive technical architecture.
+
+Do not start implementing features yet.
+
+### 1. REVIEW THE DOCUMENTATION
+
+Read all documents inside /docs.
+
+Identify:
+
+- Missing requirements.
+- Conflicting requirements.
+- Architectural inconsistencies.
+- Database design weaknesses.
+- Security vulnerabilities.
+- Scalability concerns.
+- Performance risks.
+- Integration challenges.
+- Deployment limitations.
+
+Produce an architecture review report.
+
+### 2. VALIDATE THE TECHNOLOGY STACK
+
+Evaluate:
+
+- Next.js.
+- TypeScript.
+- Supabase PostgreSQL.
+- Supabase Auth.
+- Supabase RLS.
+- Supabase Storage.
+- Vercel.
+- Tailwind CSS.
+- shadcn/ui.
+- Resend.
+
+Determine whether this stack satisfies Acadence's functional and non-functional requirements.
+
+Identify where specialized services are necessary.
+
+Do not introduce additional infrastructure without justification.
+
+### 3. FINALIZE THE ARCHITECTURE
+
+Design a modular monolith.
+
+Define:
+
+- Application layers.
+- Module boundaries.
+- Component responsibilities.
+- Service responsibilities.
+- Data access patterns.
+- Authentication architecture.
+- Authorization architecture.
+- Multi-tenant architecture.
+- API architecture.
+- Background processing.
+- Notification architecture.
+- File storage architecture.
+- AI integration architecture.
+- Scheduling engine architecture.
+- Error handling.
+- Logging and monitoring.
+
+### 4. MULTI-TENANCY
+
+This is a critical requirement.
+
+Design a secure architecture where multiple institutions can use Acadence independently.
+
+Define:
+
+- Institution identification.
+- Institution memberships.
+- Role assignments.
+- Tenant ownership.
+- Database relationships.
+- RLS policies.
+- Server-side authorization.
+- Cross-tenant isolation.
+- Platform administrator access.
+- Audit trails.
+
+Every protected database operation must enforce the correct institution permissions.
+
+Never rely exclusively on frontend filtering.
+
+### 5. DATABASE ARCHITECTURE
+
+Review the database schema.
+
+Ensure appropriate relationships, foreign keys, indexes, constraints and migrations.
+
+Pay particular attention to:
+
+- Institutions.
+- Campuses.
+- Faculties.
+- Departments.
+- Academic sessions.
+- Semesters.
+- Courses.
+- Lecturers.
+- Students.
+- Student groups.
+- Classrooms.
+- Timetables.
+- Timetable versions.
+- Timetable entries.
+- Workloads.
+- Attendance.
+- Notifications.
+- Subscriptions.
+- Audit logs.
+
+Ensure timetable conflict checks are reliable under concurrent operations.
+
+### 6. SCHEDULING ENGINE
+
+Design a scheduling engine that separates:
+
+- Constraint definition.
+- Scheduling input preparation.
+- Timetable generation.
+- Conflict validation.
+- Optimization.
+- Result evaluation.
+- Timetable publication.
+
+Start with TypeScript implementation where practical.
+
+Define clear interfaces that would allow a future Python optimization service using Google OR-Tools.
+
+Do not prematurely create a distributed microservice architecture.
+
+### 7. SECURITY
+
+Produce a security architecture covering:
+
+- Authentication.
+- Authorization.
+- RLS.
+- Session management.
+- Secrets management.
+- Input validation.
+- Rate limiting.
+- API security.
+- File access.
+- Audit logs.
+- Webhook verification.
+- Data backup.
+- Recovery.
+
+### 8. ARCHITECTURE DIAGRAMS
+
+Create:
+
+1. System context diagram.
+2. Container diagram.
+3. Application component diagram.
+4. Database ERD.
+5. Authentication flow.
+6. Authorization flow.
+7. Multi-tenancy diagram.
+8. Timetable generation workflow.
+9. Conflict detection workflow.
+10. Deployment architecture.
+
+Use Mermaid where appropriate.
+
+### 9. ARCHITECTURE DECISION RECORDS
+
+Create ADR documents for significant architectural decisions.
+
+Every ADR must contain:
+
+- Context.
+- Problem.
+- Considered options.
+- Decision.
+- Rationale.
+- Consequences.
+
+### 10. FINAL OUTPUT
+
+Update all affected documents in /docs.
+
+Create:
+
+docs/04-architecture/FINAL_SYSTEM_ARCHITECTURE.md
+
+Create:
+
+docs/13-adr/
+
+Produce an architecture validation report.
+
+Identify all outstanding blockers.
+
+Do not implement the application.
+
+Wait for explicit approval before proceeding to project foundation.
+:::
+
+---
+
+# PART 5 — MASTER PROMPT 3: The permanent development instructions
+
+This is arguably the most important prompt.
+
+It establishes how Freebuff must behave throughout the entire development process.
+
+Give it this prompt after approving the architecture.
+
+:::writing{variant="document" title="Acadence — Permanent AI Software Development Instructions" id="48271"}
+# ACADENCE
+## PERMANENT SOFTWARE DEVELOPMENT AND ENGINEERING INSTRUCTIONS
+
+You are the principal AI software development team responsible for implementing Acadence.
+
+You must follow the approved documentation and architecture throughout the entire project.
+
+### 1. DEVELOPMENT AUTHORITY
+
+The following documents are the authoritative sources:
+
+1. Approved PRD.
+2. Approved BRD.
+3. Approved SRS.
+4. Approved SDD.
+5. Final System Architecture.
+6. Database Design Document.
+7. API Specification.
+8. UI/UX Design Document.
+9. Security Specification.
+10. Implementation Roadmap.
+
+Do not introduce undocumented functionality without recording and approving the relevant changes.
+
+### 2. TECHNOLOGY RESTRICTIONS
+
+Use:
+
+- Next.js.
+- TypeScript.
+- Supabase.
+- PostgreSQL.
+- Tailwind CSS.
+- shadcn/ui.
+- Lucide React.
+- Recharts.
+- Vercel.
+- GitHub.
+
+Do not randomly change the technology stack.
+
+Do not introduce microservices.
+
+Do not introduce Python until an approved technical requirement justifies it.
+
+### 3. ENGINEERING STANDARDS
+
+Write:
+
+- Clean code.
+- Modular code.
+- Reusable components.
+- Strongly typed TypeScript.
+- Maintainable services.
+- Properly validated forms.
+- Secure database queries.
+- Consistent error handling.
+- Meaningful tests.
+
+Avoid:
+
+- Giant components.
+- Giant files.
+- Duplicate business logic.
+- Hardcoded secrets.
+- Fake production data.
+- Insecure authorization.
+- Unnecessary dependencies.
+- Unnecessary abstractions.
+
+### 4. DATABASE RULES
+
+Use database migrations.
+
+Never make undocumented production schema changes.
+
+Every institution-owned record must have an enforceable institution relationship.
+
+Create appropriate indexes, constraints and foreign keys.
+
+Use RLS for protected data.
+
+Test tenant isolation.
+
+### 5. SECURITY RULES
+
+Never expose service-role credentials in browser code.
+
+Never trust frontend role information as proof of authorization.
+
+Never expose sensitive institutional records.
+
+Never grant access to a course, timetable or document without checking the user's permissions.
+
+Validate all incoming data.
+
+Protect administrative operations.
+
+### 6. UI/UX RULES
+
+Follow the approved Acadence design system.
+
+The provided dashboard screenshot is the visual reference.
+
+Maintain:
+
+- Dark navy visual identity.
+- Consistent sidebar.
+- Consistent top navigation.
+- Reusable dashboard cards.
+- Consistent typography.
+- Consistent iconography.
+- Modern data visualizations.
+- Responsive layouts.
+- Accessible forms.
+- Loading states.
+- Empty states.
+- Error states.
+- Success feedback.
+
+Do not allow individual modules to develop unrelated designs.
+
+### 7. DEVELOPMENT WORKFLOW
+
+Implement the project in approved phases.
+
+For every phase:
+
+1. Read the relevant documentation.
+2. Identify dependencies.
+3. Plan the implementation.
+4. Implement the functionality.
+5. Write tests.
+6. Run tests.
+7. Resolve errors.
+8. Review security.
+9. Review UI/UX.
+10. Update documentation.
+11. Produce a completion report.
+
+Do not move to another phase while critical failures remain unresolved.
+
+### 8. GIT RULES
+
+Use GitHub for version control.
+
+Use meaningful commit messages.
+
+Do not overwrite stable implementations without justification.
+
+Do not delete working features to solve unrelated problems.
+
+Keep a clear development history.
+
+### 9. DOCUMENTATION RULES
+
+Update documentation whenever implementation changes affect:
+
+- Database schema.
+- API behavior.
+- Permissions.
+- Business rules.
+- Architecture.
+- User workflows.
+- Deployment.
+- Configuration.
+
+### 10. HONESTY AND COMPLETION
+
+Never claim that a feature is complete merely because its interface exists.
+
+A feature is complete only when:
+
+- The interface works.
+- Backend functionality works.
+- Database operations work.
+- Authorization works.
+- Validation works.
+- Tests pass.
+- Errors are handled.
+- Documentation is updated.
+
+Clearly distinguish implemented, partially implemented, mocked and pending functionality.
+
+### 11. APPROVAL GATES
+
+Do not automatically move through all development phases.
+
+Complete one phase and provide a report.
+
+Wait for my approval before beginning the next major phase.
+
+Your responsibility is to build a maintainable, secure and production-ready Acadence platform, not simply generate code quickly.
+:::
+
+---
+
+# PART 6 — The implementation prompts in the exact order
+
+Now we get to the actual development.
+
+I recommend using individual prompts for each implementation phase.
+
+This prevents Freebuff from trying to build the entire platform simultaneously.
+
+Here is the implementation roadmap I recommend.
+
+## Phase 1: Project foundation
+
+**Prompt 1 — Establish the project**
+
+:::writing{variant="document" title="Phase 1 — Acadence Project Foundation" id="51829"}
+Implement Phase 1 of Acadence.
+
+Establish the complete project foundation using the approved architecture.
+
+Tasks:
+
+1. Initialize the Next.js application using TypeScript.
+2. Configure Tailwind CSS.
+3. Install and configure shadcn/ui.
+4. Configure Lucide icons.
+5. Configure the Supabase client.
+6. Establish environment variable management.
+7. Configure the application layout.
+8. Create the global design system.
+9. Implement the responsive sidebar.
+10. Implement the top navigation.
+11. Implement the dashboard layout.
+12. Configure error handling.
+13. Configure logging.
+14. Establish the project folder structure.
+15. Configure linting and formatting.
+16. Configure testing infrastructure.
+17. Establish Git conventions.
+
+UI requirements:
+
+Use the supplied dashboard screenshot as the primary visual reference.
+
+Create the Acadence dashboard shell with:
+
+- Dark navy theme.
+- Sidebar navigation.
+- Top navigation.
+- Search.
+- Notifications.
+- User profile.
+- Main dashboard content.
+- Responsive behavior.
+
+Create reusable components.
+
+Do not implement real business functionality yet.
+
+Deliver:
+
+- Working application foundation.
+- Complete folder structure.
+- Design system.
+- Supabase configuration.
+- Environment example file.
+- Tests.
+- Updated documentation.
+
+Report completion and wait for approval.
+:::
+
+## Phase 2: Authentication and authorization
+
+**Prompt 2 — Authentication**
+
+:::writing{variant="document" title="Phase 2 — Acadence Authentication and Authorization" id="72516"}
+Implement authentication and authorization.
+
+Use Supabase Auth.
+
+Implement:
+
+1. User registration where permitted.
+2. Login.
+3. Logout.
+4. Email verification.
+5. Password reset.
+6. Session management.
+7. Protected routes.
+8. User profiles.
+9. Role assignments.
+10. Institution memberships.
+11. Role-based dashboards.
+12. Authorization middleware or equivalent server-side protection.
+13. Secure account activation.
+
+Roles:
+
+- Platform Super Admin.
+- Institution Admin.
+- Faculty Admin.
+- Department Admin.
+- Lecturer.
+- Student.
+- Support Operator.
+
+Security requirements:
+
+- Use secure session handling.
+- Protect server-side routes.
+- Implement database RLS.
+- Never trust frontend role information.
+- Prevent unauthorized account creation with privileged roles.
+- Test cross-institution access restrictions.
+
+Create appropriate database migrations.
+
+Create authentication tests and authorization tests.
+
+Do not proceed to institution management until this phase is tested and approved.
+:::
+
+## Phase 3: Institution management
+
+**Prompt 3 — Institution management**
+
+:::writing{variant="document" title="Phase 3 — Acadence Institution Management" id="19536"}
+Implement the institution management module.
+
+Features:
+
+1. Create institutions.
+2. Edit institution profiles.
+3. Activate and deactivate institutions.
+4. Manage institution settings.
+5. Manage campuses.
+6. Manage institution administrators.
+7. Configure institutional branding.
+8. Configure academic defaults.
+9. Manage institution memberships.
+10. View institutional activity.
+11. Institution onboarding workflow.
+12. Institution management analytics.
+
+Establish the hierarchy:
+
+Platform → Institution → Campus → Faculty → Department.
+
+Implement proper relationships and tenant isolation.
+
+Only authorized platform administrators can provision institutions.
+
+Institution administrators must only manage their own institution.
+
+Create all necessary database migrations, interfaces, APIs, validations and tests.
+
+Follow the approved Acadence design system.
+
+Wait for approval after completing the module.
+:::
+
+## Phase 4: Academic administration
+
+**Prompt 4 — Academic administration**
+
+:::writing{variant="document" title="Phase 4 — Acadence Academic Administration" id="36492"}
+Implement the academic administration module.
+
+Features:
+
+1. Faculty management.
+2. Department management.
+3. Academic session management.
+4. Semester management.
+5. Programme management.
+6. Course management.
+7. Student management.
+8. Lecturer management.
+9. Student group management.
+10. Course assignments.
+11. Academic calendar management.
+12. CSV and Excel imports.
+
+Implement:
+
+- Create.
+- View.
+- Update.
+- Archive.
+- Search.
+- Filter.
+- Pagination.
+- Bulk operations where appropriate.
+
+Enforce institution and department permissions.
+
+Ensure every academic record belongs to the correct institution.
+
+Implement validation, duplicate detection, error reporting and audit logging.
+
+Create automated tests.
+
+Wait for approval.
+:::
+
+## Phase 5: Classroom and facilities management
+
+**Prompt 5 — Facilities**
+
+:::writing{variant="document" title="Phase 5 — Acadence Classroom and Facilities Management" id="84163"}
+Implement classroom and facilities management.
+
+Features:
+
+1. Building management.
+2. Classroom management.
+3. Lecture hall management.
+4. Laboratory management.
+5. Room capacity.
+6. Room features and equipment.
+7. Accessibility information.
+8. Room availability.
+9. Room bookings.
+10. Room utilization reports.
+
+Support multiple campuses.
+
+Ensure classrooms cannot be allocated to overlapping bookings.
+
+Enforce institutional permissions.
+
+Create tests for capacity, availability and booking conflicts.
+
+Follow the approved design system.
+
+Wait for approval.
+:::
+
+## Phase 6: Timetable management
+
+**Prompt 6 — Timetable management**
+
+:::writing{variant="document" id="91743" title="Phase 6 — Acadence Timetable Management"}
+Implement the timetable management module.
+
+This is one of the most important Acadence modules.
+
+Features:
+
+1. Create timetable drafts.
+2. Edit timetable entries.
+3. Assign courses.
+4. Assign lecturers.
+5. Assign classrooms.
+6. Assign student groups.
+7. Configure days and time slots.
+8. View timetables by department.
+9. View timetables by faculty.
+10. View timetables by lecturer.
+11. View timetables by student group.
+12. View timetables by classroom.
+13. Import existing timetables.
+14. Publish timetables.
+15. Archive timetables.
+16. Preserve timetable versions.
+17. Submit timetable change requests.
+18. Approve timetable changes.
+
+Implement a proper timetable data model.
+
+A published timetable must retain its version history.
+
+Never silently overwrite published timetable versions.
+
+Provide intuitive timetable visualizations.
+
+Create tests for timetable creation, editing, publishing and versioning.
+
+Wait for approval.
+:::
+
+## Phase 7: Conflict detection engine
+
+**Prompt 7 — Conflict detection**
+
+:::writing{variant="document" id="63017" title="Phase 7 — Acadence Conflict Detection Engine"}
+Implement the timetable conflict detection engine.
+
+Detect:
+
+1. Lecturer time conflicts.
+2. Classroom time conflicts.
+3. Student group time conflicts.
+4. Overlapping timetable entries.
+5. Classroom capacity violations.
+6. Room suitability violations.
+7. Lecturer workload violations.
+8. Unavailable scheduling periods.
+
+Distinguish between hard constraints and soft constraints.
+
+Hard constraint violations must prevent timetable publication.
+
+Soft constraint violations should produce warnings.
+
+Implement:
+
+- Conflict detection services.
+- Conflict severity levels.
+- Conflict reports.
+- Conflict explanations.
+- Suggested resolutions.
+- Automated validation.
+- Revalidation before publication.
+
+Ensure conflict detection is performed on the server.
+
+Prevent concurrent operations from creating conflicting published bookings.
+
+Write comprehensive automated tests.
+
+Do not mark this module complete until the conflict scenarios have been tested.
+:::
+
+---
+
+# PART 7 — Remaining implementation phases
+
+After those seven phases, continue in this order.
+
+| Phase | Module | Main deliverables |
+|---|---|---|
+| 8 | Intelligent timetable generation | Automatic timetable generation and optimization |
+| 9 | Lecturer workload | Teaching hours, overload warnings and reports |
+| 10 | Academic calendar | Events, semesters, holidays and deadlines |
+| 11 | Timetable notifications | Change alerts and announcements |
+| 12 | Attendance management | Attendance records and integrations |
+| 13 | AI learning assistant | Study guides, summaries and practice questions |
+| 14 | Document generation | PDF generation and document management |
+| 15 | Analytics | Institutional and academic dashboards |
+| 16 | Subscriptions | Plans, billing and institution subscriptions |
+| 17 | White-label functionality | Institutional branding and domain configuration |
+| 18 | Security hardening | Penetration testing and security validation |
+| 19 | Performance optimization | Query optimization and load testing |
+| 20 | Production deployment | Production configuration, backups and monitoring |
+
+For each of these phases, use the permanent development instructions from Master Prompt 3 and require the same testing and approval process.
+
+---
+
+# PART 8 — The dashboard design implementation instructions
+
+I want to give special attention to your screenshot because the visual quality of Acadence matters.
+
+The screenshot should not just inspire the dashboard. It should influence the entire application design.
+
+Give Freebuff this additional instruction before it implements the first dashboard.
+
+:::writing{variant="document" title="Acadence — Global UI/UX Design System Instructions" id="58261"}
+# ACADENCE GLOBAL UI/UX DESIGN SYSTEM
+
+The attached dashboard screenshot is the primary visual reference for Acadence.
+
+Your task is to reproduce its visual design language across the entire platform.
+
+## 1. VISUAL IDENTITY
+
+Create a premium enterprise SaaS interface.
+
+Primary theme:
+Dark navy.
+
+Use a consistent palette built around:
+
+- Deep navy backgrounds.
+- Slightly lighter navy panels.
+- Subtle borders.
+- Bright blue primary accents.
+- Muted secondary text.
+- Green success indicators.
+- Amber warning indicators.
+- Red error indicators.
+
+Define all colours using reusable design tokens.
+
+## 2. SIDEBAR
+
+Create a fixed vertical sidebar containing:
+
+- Acadence logo.
+- Dashboard.
+- Academic Administration.
+- Timetable Management.
+- Scheduling.
+- Classrooms.
+- Lecturers.
+- Students.
+- Academic Calendar.
+- Attendance.
+- Analytics.
+- Reports.
+- Settings.
+
+Navigation must adapt according to user permissions.
+
+Use expandable navigation groups.
+
+## 3. TOP NAVIGATION
+
+Include:
+
+- Sidebar toggle.
+- Breadcrumbs.
+- Global search.
+- Theme selector.
+- Notifications.
+- User profile.
+- Account menu.
+
+## 4. DASHBOARD COMPONENTS
+
+Create reusable:
+
+- Statistic cards.
+- Analytics cards.
+- Data tables.
+- Activity feeds.
+- Calendar widgets.
+- Charts.
+- Progress indicators.
+- Status badges.
+- Empty states.
+- Modal dialogs.
+
+## 5. DASHBOARD CONTENT
+
+The institution dashboard should display relevant academic information, including:
+
+- Total students.
+- Total lecturers.
+- Active courses.
+- Classrooms.
+- Published timetables.
+- Scheduling conflicts.
+- Upcoming academic events.
+- Room utilization.
+- Lecturer workload.
+- Recent institutional activities.
+
+Do not use fake e-commerce metrics.
+
+## 6. USER-SPECIFIC DASHBOARDS
+
+Create separate experiences for:
+
+- Platform Super Admin.
+- Institution Admin.
+- Faculty Admin.
+- Department Admin.
+- Lecturer.
+- Student.
+
+Each dashboard must display information relevant to that role.
+
+## 7. RESPONSIVENESS
+
+Support:
+
+- Desktop.
+- Laptop.
+- Tablet.
+- Mobile.
+
+On smaller screens, provide a compact or collapsible navigation system.
+
+## 8. DESIGN CONSISTENCY
+
+Create a centralized component library.
+
+Do not implement each dashboard independently with different styles.
+
+Use shared components, design tokens and consistent layouts.
+
+## 9. INTERACTION QUALITY
+
+Every interactive element must work.
+
+Include:
+
+- Loading states.
+- Skeleton loaders.
+- Empty states.
+- Validation messages.
+- Confirmation dialogs.
+- Success notifications.
+- Error notifications.
+- Accessible keyboard interactions.
+
+## 10. FINAL REQUIREMENT
+
+The finished Acadence application should visually resemble the supplied reference screenshot in its overall composition, colour scheme, navigation structure, spacing, card styling and premium dashboard appearance.
+
+Adapt the design to academic operations rather than e-commerce.
+
+The reference image must be treated as a persistent design requirement throughout development.
+:::
+
+---
+
+# PART 9 — My recommended GitHub project structure
+
+I also recommend instructing Freebuff to maintain a structure similar to this:
+
+```text
+acadence/
+│
+├── docs/
+│   ├── 01-product/
+│   ├── 02-business/
+│   ├── 03-requirements/
+│   ├── 04-architecture/
+│   ├── 05-database/
+│   ├── 06-api/
+│   ├── 07-ui-ux/
+│   ├── 08-security/
+│   ├── 09-testing/
+│   ├── 10-implementation/
+│   ├── 11-deployment/
+│   └── 13-adr/
+│
+├── public/
+│
+├── src/
+│   ├── app/
+│   │   ├── (public)/
+│   │   ├── (auth)/
+│   │   ├── platform/
+│   │   ├── institution/
+│   │   ├── faculty/
+│   │   ├── lecturer/
+│   │   ├── student/
+│   │   └── api/
+│   │
+│   ├── components/
+│   │   ├── ui/
+│   │   ├── layout/
+│   │   ├── dashboard/
+│   │   └── shared/
+│   │
+│   ├── modules/
+│   │   ├── institutions/
+│   │   ├── users/
+│   │   ├── academics/
+│   │   ├── classrooms/
+│   │   ├── timetables/
+│   │   ├── scheduling/
+│   │   ├── conflicts/
+│   │   ├── workloads/
+│   │   ├── calendars/
+│   │   ├── attendance/
+│   │   ├── notifications/
+│   │   ├── ai-learning/
+│   │   ├── documents/
+│   │   ├── analytics/
+│   │   └── subscriptions/
+│   │
+│   ├── lib/
+│   │   ├── supabase/
+│   │   ├── auth/
+│   │   ├── security/
+│   │   ├── validation/
+│   │   └── utils/
+│   │
+│   ├── services/
+│   ├── hooks/
+│   ├── types/
+│   └── config/
+│
+├── supabase/
+│   ├── migrations/
+│   ├── seed.sql
+│   └── tests/
+│
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+│
+├── .env.example
+├── .gitignore
+├── package.json
+└── README.md
+```
+
+Freebuff may adjust this structure when justified by its architecture analysis, but it must preserve the modular organization.
+
+---
+
+# PART 10 — Five rules I strongly recommend you follow
+
+These will save you a lot of trouble.
+
+**1. Never allow Freebuff to build everything at once.**
+
+Complete one module, test it and approve it before moving forward.
+
+**2. Never let Freebuff change your architecture without approval.**
+
+If it believes a technology should change, it must explain why and document the proposed change.
+
+**3. Never accept a dashboard that only looks functional.**
+
+A button that does nothing is not an implemented feature.
+
+**4. Never compromise on multi-tenant security.**
+
+An administrator from Institution A must never be able to access Institution B's private data.
+
+**5. Keep your documentation updated.**
+
+The documentation must evolve alongside the actual application.
+
+---
+
+# My suggested starting workflow
+
+Here is precisely how I would start:
+
+| Order | Action | Expected result |
+|---|---|---|
+| 1 | Create GitHub repository | Acadence source repository |
+| 2 | Connect repository to Freebuff | AI development environment |
+| 3 | Upload existing architecture PDF | Existing requirements available |
+| 4 | Upload dashboard screenshot | Persistent visual reference |
+| 5 | Give Master Prompt 1 | Complete documentation |
+| 6 | Review documentation | Approved product blueprint |
+| 7 | Give Master Prompt 2 | Final architecture |
+| 8 | Review architecture | Approved technical design |
+| 9 | Give Master Prompt 3 | Permanent development rules |
+| 10 | Start Phase 1 | Working project foundation |
+
+**One final piece of advice:** Keep the documentation and source code in the same GitHub repository. This means Freebuff can continuously refer to the approved requirements instead of relying on its conversation history.
+
+Also, save the dashboard screenshot inside the repository, for example:
+
+`docs/07-ui-ux/reference-dashboard.png`
+
+That way, it remains available throughout development.
+
+### What I would like us to do next
