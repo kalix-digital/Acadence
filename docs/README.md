@@ -1,6 +1,6 @@
 # Acadence Documentation
 
-> **Document ID:** DOC-INDEX · **Version:** 1.0 · **Status:** Approved for implementation · **Date:** 2026-11-23 · **Owner:** Product & Engineering
+> **Document ID:** DOC-INDEX · **Version:** 1.1 · **Status:** Approved for implementation · **Date:** 2026-11-24 · **Owner:** Product & Engineering
 
 Acadence is a multi-institution academic scheduling, administration and AI-assisted learning platform. This directory holds the authoritative product, engineering and design documentation that implementation must follow, as required by `project_plan.txt`.
 
@@ -38,6 +38,7 @@ Requirements use unique identifiers (`FR-AUTH-001`, `NFR-SEC-001`) and are trace
 | --- | --- | --- |
 | [System Architecture](04-architecture/SYSTEM_ARCHITECTURE.md) | ARC-001 | Stack validation, layers, multi-tenancy, auth, scheduling engine, deployment |
 | [Database Design](05-database/DATABASE_DESIGN.md) | DBD-001 | ERD, tables, keys, indexes, constraints, RLS model |
+| [Authentication, Memberships and RLS](05-database/AUTH_AND_MEMBERSHIPS.md) | DBD-002 | Phase 2 migrations, roles, policy matrix, session flow |
 | [API Specification](06-api/API_SPECIFICATION.md) | API-001 | Conventions, endpoints, errors, idempotency, rate limits |
 | [Testing Strategy](09-testing/TESTING_STRATEGY.md) | QA-001 | Test pyramid, tenant-isolation tests, gates |
 | [Implementation Roadmap](10-implementation/IMPLEMENTATION_ROADMAP.md) | IMP-001 | 20 phases, entry/exit criteria, status, structure |
@@ -72,3 +73,4 @@ Every document carries a document ID, version, date, owner, status and revision 
 | Version | Date | Author | Change |
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-23 | Engineering | Initial documentation milestone |
+| 1.1 | 2026-11-24 | Engineering | Added the Phase 2 authentication and RLS document |

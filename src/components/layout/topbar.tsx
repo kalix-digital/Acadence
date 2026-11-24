@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   ChevronRight,
+  Loader2,
   LogOut,
   Menu,
   Plus,
@@ -15,6 +17,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarNav } from "@/components/layout/app-sidebar";
+import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ACTIVE_CONTEXT } from "@/config/site";
+import type { ShellIdentity } from "@/components/layout/dashboard-shell";
 
 const notifications = [
   { title: "Timetable v3 published", detail: "Computer Science · 400 level", time: "12m" },
@@ -36,8 +39,31 @@ const notifications = [
   { title: "Conflict detected", detail: "CSC 401 overlaps CSC 305", time: "2h" },
 ];
 
-export function Topbar() {
+function initials(name: string) {
+  return name
+    .replace(/^(Dr\.|Prof\.|Mrs\.|Mr\.|Ms\.)\s+/, "")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+export function Topbar({ identity }: { identity: ShellIdentity }) {
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await createClient().auth.signOut();
+    } finally {
+      router.replace("/sign-in");
+      router.refresh();
+    }
+  }
 
   return (
     <header className="glass-panel sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/70 px-4 lg:px-6">
@@ -49,13 +75,20 @@ export function Topbar() {
         </SheetTrigger>
         <SheetContent side="left" className="w-72 bg-sidebar p-0">
           <SheetTitle className="sr-only">Acadence navigation</SheetTitle>
-          <SidebarNav onNavigate={() => setMobileOpen(false)} />
+          <SidebarNav
+            capabilities={identity.capabilities}
+            roleLabel={identity.roleLabel}
+            onNavigate={() => setMobileOpen(false)}
+          />
         </SheetContent>
       </Sheet>
 
       <nav aria-label="Breadcrumb" className="hidden items-center gap-1.5 text-sm md:flex">
-        <Link href="/" className="text-muted-foreground transition-colors hover:text-foreground">
-          {ACTIVE_CONTEXT.institution}
+        <Link
+          href="/institution"
+          className="max-w-[16rem] truncate text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {identity.institutionName}
         </Link>
         <ChevronRight className="size-3.5 text-muted-foreground/50" />
         <span className="font-medium">Dashboard</span>
@@ -117,22 +150,22 @@ export function Topbar() {
             >
               <Avatar className="size-8 ring-1 ring-border">
                 <AvatarFallback className="bg-primary/15 text-[0.7rem] font-medium text-primary">
-                  AO
+                  {initials(identity.user.name)}
                 </AvatarFallback>
               </Avatar>
               <span className="hidden text-left leading-tight xl:block">
-                <span className="block text-xs font-medium">{ACTIVE_CONTEXT.user.name}</span>
+                <span className="block text-xs font-medium">{identity.user.name}</span>
                 <span className="block text-[0.65rem] text-muted-foreground">
-                  {ACTIVE_CONTEXT.role}
+                  {identity.roleLabel}
                 </span>
               </span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
-              <span className="block text-sm">{ACTIVE_CONTEXT.user.name}</span>
-              <span className="block text-xs font-normal text-muted-foreground">
-                {ACTIVE_CONTEXT.user.email}
+              <span className="block text-sm">{identity.user.name}</span>
+              <span className="block truncate text-xs font-normal text-muted-foreground">
+                {identity.user.email}
               </span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -146,12 +179,23 @@ export function Topbar() {
               <LifeBuoy /> Support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Plus /> Invite a colleague
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut /> Sign out
+            {identity.capabilities.includes("manage_members") && (
+              <>
+                <DropdownMenuItem>
+                  <Plus /> Invite a colleague
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                void handleSignOut();
+              }}
+              disabled={signingOut}
+            >
+              {signingOut ? <Loader2 className="animate-spin" /> : <LogOut />}
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

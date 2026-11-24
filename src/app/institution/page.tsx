@@ -14,7 +14,8 @@ import { UpcomingEvents } from "@/components/dashboard/upcoming-events";
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import { WorkloadPanel } from "@/components/dashboard/workload-panel";
 import { Badge } from "@/components/ui/badge";
-import { ACTIVE_CONTEXT } from "@/config/site";
+import { ROLE_LABELS } from "@/lib/auth/capabilities";
+import { requireMember } from "@/lib/auth/require";
 import { overviewStats } from "@/data/dashboard";
 
 export const metadata: Metadata = {
@@ -23,19 +24,22 @@ export const metadata: Metadata = {
 
 const statIcons = [GraduationCap, Users, BookOpenCheck, Building2];
 
-export default function DashboardPage() {
+export default async function InstitutionDashboardPage() {
+  const { user, role, institution } = await requireMember();
+  const institutionName = institution?.name ?? "Institution";
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[0.7rem] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            {ACTIVE_CONTEXT.institution} · {ACTIVE_CONTEXT.role}
+            {institutionName} · {ROLE_LABELS[role]}
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">Institutional overview</h1>
         </div>
         <Badge variant="outline" className="gap-1.5 border-chart-5/30 text-chart-5">
           <span className="size-1.5 rounded-full bg-chart-5" />
-          Phase 1 foundation · sample data
+          Phase 2 · authenticated · sample metrics
         </Badge>
       </div>
 
@@ -44,7 +48,7 @@ export default function DashboardPage() {
         className="grid gap-4 xl:grid-cols-5"
       >
         <div className="xl:col-span-2">
-          <WelcomeBanner />
+          <WelcomeBanner name={user.name} institutionName={institutionName} />
         </div>
         {overviewStats.map((stat, index) => (
           <StatCard

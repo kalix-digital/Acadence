@@ -1,10 +1,18 @@
 import Link from "next/link";
 import { ArrowRight, CalendarCheck2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ACTIVE_CONTEXT } from "@/config/site";
+import { SAMPLE_TERM } from "@/config/site";
 import { bannerStats } from "@/data/dashboard";
 
-export function WelcomeBanner() {
+export function WelcomeBanner({
+  name,
+  institutionName,
+}: {
+  name: string;
+  institutionName: string;
+}) {
+  const firstName = name.split(" ").filter(Boolean).slice(-1)[0] ?? name;
+
   return (
     <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary to-[#1d4ed8] p-5 text-primary-foreground shadow-xl shadow-primary/20 sm:p-6">
       <div
@@ -19,15 +27,15 @@ export function WelcomeBanner() {
       <div className="relative flex h-full flex-col">
         <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-[0.12em]">
           <Sparkles className="size-3" />
-          {ACTIVE_CONTEXT.semester}
+          {SAMPLE_TERM}
         </span>
 
         <h1 className="mt-3 text-xl font-semibold tracking-tight sm:text-2xl">
-          Welcome back, {ACTIVE_CONTEXT.user.name.split(" ").slice(-1)}
+          Welcome back, {firstName}
         </h1>
         <p className="mt-1 max-w-sm text-sm text-primary-foreground/80">
-          {ACTIVE_CONTEXT.institution} · {ACTIVE_CONTEXT.campus}. Semester scheduling is
-          68% complete with 7 conflicts awaiting review.
+          {institutionName}. Scheduling foundation is in place; live semester data
+          arrives with the scheduling modules.
         </p>
 
         <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-white/15 pt-4">

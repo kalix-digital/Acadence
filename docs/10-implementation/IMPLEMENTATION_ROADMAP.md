@@ -16,7 +16,7 @@
 | Phase | Module | Status | Exit criteria |
 | --- | --- | --- | --- |
 | 1 | Project foundation | **Complete** (tests pending) | App builds, shell renders, tokens shared, env documented |
-| 2 | Authentication & authorisation | Not started | Sign-in/out/reset/verify work; RLS on all tables; role dashboards; isolation tests |
+| 2 | Authentication & authorisation | **Core complete** (live verification + isolation tests pending) | Sign-in/out/reset/verify work; RLS on all tables; role dashboards; isolation tests |
 | 3 | Institution management | Not started | Provision → configure → onboard; suspension; membership scopes |
 | 4 | Academic administration | Not started | Sessions, programmes, courses, offerings, students, lecturers, groups, imports |
 | 5 | Classroom & facilities | Not started | Rooms, features, availability, bookings without overlap, utilisation |
@@ -59,7 +59,31 @@
 - `npm run build` — pass (TypeScript clean, `/` prerendered).
 - Dev server on `0.0.0.0:3000` answered `HTTP 200` for `/` with the preview host header and returned the dashboard markup.
 
-## 4. Project structure
+## 4. Phase 2 report (delivered)
+
+**Implemented**
+
+- Tenancy migrations: `institutions`, `institution_settings`, `profiles`, `institution_memberships`, enums, profile-on-signup trigger, tenant helper functions.
+- RLS enabled on all four tables with an institution-admin/platform-admin policy matrix; `anon` has no access; institution admins cannot grant platform roles or delete themselves.
+- Next.js 16 `proxy.ts` session refresh (replacing the deprecated `middleware` convention) and route protection for `/institution`, `/platform`, `/lecturer`, `/student`, `/no-access`.
+- Email/password sign-in, password reset (PKCE callback plus token-hash confirmation), sign-out, and safe `next` redirects.
+- Membership and capability resolution (`getAuthContext`, `requireUser`, `requireMember`, `requireCapability`) with a role → capability map.
+- Public landing page, auth route group, membership-less `/no-access` guidance, and a capability-filtered shell that renders the resolved user, institution and role instead of placeholder identity.
+- Typed subset of the schema in `src/types/database.ts`; `cacheComponents` disabled because authenticated routes read the session per request.
+
+**Not yet implemented**
+
+- Invitation creation/acceptance and member management screens (Phase 3), and the `/platform`, `/lecturer`, `/student` landing pages (guards exist, pages do not).
+- Automated tenant-isolation tests, Vitest/Playwright infrastructure and CI.
+- Live verification against a provisioned Supabase project: no credentials are available in this workspace, so migrations were reviewed but not applied.
+
+**Verification performed**
+
+- `npm run lint` — pass.
+- `npm run build` — pass; `/institution` and `/no-access` are dynamic, `/` and the auth screens are static.
+- `next start` with a preview `Host` header: `/`, `/sign-in`, `/forgot-password` returned `200`; `/institution` and `/no-access` returned `307` to `/sign-in?next=…` while unauthenticated; `/auth/callback` without a code redirected to the sign-in error state.
+
+## 5. Project structure
 
 ```
 acadence/
@@ -67,14 +91,14 @@ acadence/
 ├── public/
 ├── src/
 │   ├── app/
-│   │   ├── (dashboard)/        authenticated shell route group
-│   │   ├── (public)/           planned: marketing entry
-│   │   ├── (auth)/             planned: sign-in, reset, verify, invite
-│   │   ├── platform/           planned: platform admin routes
-│   │   ├── institution/        planned: institution admin routes
-│   │   ├── faculty/            planned
-│   │   ├── lecturer/           planned
-│   │   ├── student/            planned
+│   │   ├── (public)/           public landing page
+│   │   ├── (auth)/             sign-in, forgot/reset password, auth actions
+│   │   ├── auth/               callback + confirm route handlers
+│   │   ├── institution/        authenticated institution shell and dashboard
+│   │   ├── no-access/          signed-in account without a membership
+│   │   ├── platform/           planned: platform admin routes (guarded)
+│   │   ├── lecturer/           planned (guarded)
+│   │   ├── student/            planned (guarded)
 │   │   └── api/v1/             planned: integrations and webhooks
 │   ├── components/
 │   │   ├── ui/                 shadcn primitives
@@ -84,15 +108,15 @@ acadence/
 │   ├── modules/                planned: domain modules
 │   ├── services/               planned: cross-module business rules
 │   ├── lib/
-│   │   ├── supabase/
-│   │   ├── auth/               planned: session, capability resolution
+│   │   ├── supabase/           browser, server and proxy clients
+│   │   ├── auth/               session, membership, capability resolution
 │   │   ├── validation/         planned: zod schemas
 │   │   └── utils.ts
 │   ├── config/                 site constants, navigation, env
 │   ├── data/                   Phase 1 sample data (to be replaced)
-│   └── types/                  planned: domain and generated database types
+│   └── types/                  database types (generated types in a later phase)
 ├── supabase/
-│   ├── migrations/
+│   ├── migrations/             tenancy schema + RLS (Phase 2)
 │   ├── seed.sql
 │   └── tests/
 ├── tests/
@@ -103,7 +127,7 @@ acadence/
 └── package.json
 ```
 
-## 5. Git conventions
+## 6. Git conventions
 
 - Branches: `feat/<scope>`, `fix/<scope>`, `docs/<scope>`, `chore/<scope>`.
 - Commits: imperative subject scoped to the change, e.g. `feat(timetables): add draft publish transaction`. No mixed-purpose commits.
@@ -111,12 +135,12 @@ acadence/
 - `main` is protected: no force pushes, no direct commits; merges require green CI.
 - Stable implementations are not overwritten without a recorded justification (ADR or phase report).
 
-## 6. Traceability
+## 7. Traceability
 
 | Phase | Requirement groups | Screens |
 | --- | --- | --- |
-| 1 | NFR-MAINT-001, NFR-RESP-001, NFR-A11Y-001 (shell) | `/` |
-| 2 | FR-AUTH-001…010 | auth screens, role landing pages |
+| 1 | NFR-MAINT-001, NFR-RESP-001, NFR-A11Y-001 (shell) | `/` (now the public entry; dashboard moved to `/institution`) |
+| 2 | FR-AUTH-001…010 | `/sign-in`, `/forgot-password`, `/reset-password`, `/no-access`, `/institution` |
 | 3 | FR-INST-001…010 | `/institution/*`, `/platform/institutions*` |
 | 4 | FR-ACAD-001…012 | `/institution/academics/*` |
 | 5 | FR-ROOM-001…007 | `/institution/rooms` |
@@ -128,8 +152,9 @@ acadence/
 | 13–14 | FR-AI-*, FR-DOC-* | `/student/study`, document history |
 | 15–16 | FR-AN-*, FR-SUB-* | `/shared/analytics`, `/platform/plans` |
 
-## 7. Revision history
+## 8. Revision history
 
 | Version | Date | Author | Change |
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-23 | Engineering | Roadmap with Phase 1 reported complete |
+| 1.1 | 2026-11-24 | Engineering | Phase 2 authentication, memberships and RLS reported |

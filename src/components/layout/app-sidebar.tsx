@@ -5,18 +5,26 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, GraduationCap } from "lucide-react";
 import { navigation, type NavSection } from "@/config/navigation";
+import type { Capability } from "@/lib/auth/capabilities";
 import { cn } from "@/lib/utils";
 
 function NavSectionBlock({
   section,
+  capabilities,
   onNavigate,
 }: {
   section: NavSection;
+  capabilities: Capability[];
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(true);
   const Chevron = ChevronDown;
+  const items = section.items.filter(
+    (item) => !item.capability || capabilities.includes(item.capability),
+  );
+
+  if (items.length === 0) return null;
 
   return (
     <div className="space-y-1">
@@ -34,7 +42,7 @@ function NavSectionBlock({
 
       {open && (
         <ul className="space-y-0.5">
-          {section.items.map((item) => {
+          {items.map((item) => {
             const Icon = item.icon;
             const active = item.href === pathname;
             const planned = Boolean(item.phase);
@@ -76,7 +84,15 @@ function NavSectionBlock({
   );
 }
 
-export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+export function SidebarNav({
+  capabilities,
+  roleLabel,
+  onNavigate,
+}: {
+  capabilities: Capability[];
+  roleLabel: string;
+  onNavigate?: () => void;
+}) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2.5 px-4 py-5">
@@ -98,17 +114,17 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <NavSectionBlock
             key={section.id}
             section={section}
+            capabilities={capabilities}
             onNavigate={onNavigate}
           />
         ))}
       </div>
 
       <div className="m-3 rounded-xl border border-sidebar-border bg-sidebar-accent/60 p-3">
-        <p className="text-xs font-medium text-sidebar-foreground">
-          Phase 1 · Foundation
-        </p>
+        <p className="text-xs font-medium text-sidebar-foreground">{roleLabel}</p>
         <p className="mt-1 text-[0.7rem] leading-relaxed text-sidebar-foreground/55">
-          Navigation entries marked P# ship in a later implementation phase.
+          Navigation is limited to your role. Entries marked P# ship in a later
+          implementation phase.
         </p>
       </div>
     </div>
