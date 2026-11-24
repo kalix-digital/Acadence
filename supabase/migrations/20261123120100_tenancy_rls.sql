@@ -130,12 +130,17 @@ create policy memberships_insert on public.institution_memberships
     )
   );
 
+-- No policy on this table may query public.institution_memberships itself:
+-- an RLS policy that reads its own relation recurses until PostgreSQL aborts
+-- with "infinite recursion detected in policy". Self-service invitation
+-- acceptance therefore goes through public.accept_invitation() below, which is
+-- SECURITY DEFINER (bypasses RLS as the owner) and only ever touches the
+-- caller's own row.
 drop policy if exists memberships_update on public.institution_memberships;
 create policy memberships_update on public.institution_memberships
   for update to authenticated
   using (
-    user_id = (select auth.uid())                       -- accept invitation / consent
-    or public.is_platform_admin()
+    public.is_platform_admin()
     or (
       institution_id in (select public.auth_institution_ids())
       and public.auth_role(institution_id) = 'institution_admin'
@@ -143,14 +148,10 @@ create policy memberships_update on public.institution_memberships
   )
   with check (
     public.is_platform_admin()
-    or (institution_id in (select public.auth_institution_ids())
-        and public.auth_role(institution_id) = 'institution_admin')
     or (
-      -- a member may only change their own row status to active
-      user_id = (select auth.uid())
-      and role = (select m.role from public.institution_memberships m
-                  where m.id = institution_memberships.id)
-      and status = 'active'
+      role <> 'platform_admin'
+      and institution_id in (select public.auth_institution_ids())
+      and public.auth_role(institution_id) = 'institution_admin'
     )
   );
 
@@ -165,3 +166,42 @@ create policy memberships_delete on public.institution_memberships
       and user_id <> (select auth.uid())                 -- never remove yourself
     )
   );
+
+-- ---------------------------------------------------------------------------
+-- Invitation acceptance
+--   The only member-initiated write to institution_memberships. A definer
+--   function avoids both a self-referencing policy and any broader UPDATE
+--   right on the table.
+-- ---------------------------------------------------------------------------
+create or replace function public.accept_invitation(p_membership_id uuid)
+returns public.membership_status
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_status public.membership_status;
+begin
+  if (select auth.uid()) is null then
+    raise exception 'not authenticated' using errcode = '28000';
+  end if;
+
+  update public.institution_memberships
+     set status = 'active',
+         accepted_at = coalesce(accepted_at, now())
+   where id = p_membership_id
+     and user_id = (select auth.uid())
+     and status = 'invited'
+  returning status into v_status;
+
+  if v_status is null then
+    raise exception 'invitation not found or already accepted'
+      using errcode = 'P0002';
+  end if;
+
+  return v_status;
+end;
+$$;
+
+revoke all on function public.accept_invitation(uuid) from public, anon;
+grant execute on function public.accept_invitation(uuid) to authenticated;

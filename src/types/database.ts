@@ -83,6 +83,10 @@ export type Database = {
       is_platform_admin: { Args: Record<string, never>; Returns: boolean };
       auth_institution_ids: { Args: Record<string, never>; Returns: string[] };
       auth_role: { Args: { p_institution: string }; Returns: MembershipRole | null };
+      accept_invitation: {
+        Args: { p_membership_id: string };
+        Returns: MembershipStatus;
+      };
     };
     Enums: {
       institution_status: InstitutionStatus;

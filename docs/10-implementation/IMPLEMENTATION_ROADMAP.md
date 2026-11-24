@@ -16,7 +16,7 @@
 | Phase | Module | Status | Exit criteria |
 | --- | --- | --- | --- |
 | 1 | Project foundation | **Complete** (tests pending) | App builds, shell renders, tokens shared, env documented |
-| 2 | Authentication & authorisation | **Core complete** (live verification + isolation tests pending) | Sign-in/out/reset/verify work; RLS on all tables; role dashboards; isolation tests |
+| 2 | Authentication & authorisation | **Complete** (hosted Supabase verification pending) | Sign-in/out/reset/verify work; RLS on all tables; role dashboards; isolation tests |
 | 3 | Institution management | Not started | Provision → configure → onboard; suspension; membership scopes |
 | 4 | Academic administration | Not started | Sessions, programmes, courses, offerings, students, lecturers, groups, imports |
 | 5 | Classroom & facilities | Not started | Rooms, features, availability, bookings without overlap, utilisation |
@@ -65,6 +65,7 @@
 
 - Tenancy migrations: `institutions`, `institution_settings`, `profiles`, `institution_memberships`, enums, profile-on-signup trigger, tenant helper functions.
 - RLS enabled on all four tables with an institution-admin/platform-admin policy matrix; `anon` has no access; institution admins cannot grant platform roles or delete themselves.
+- Invitation acceptance through the `accept_invitation(uuid)` definer RPC, so no membership policy reads its own table.
 - Next.js 16 `proxy.ts` session refresh (replacing the deprecated `middleware` convention) and route protection for `/institution`, `/platform`, `/lecturer`, `/student`, `/no-access`.
 - Email/password sign-in, password reset (PKCE callback plus token-hash confirmation), sign-out, and safe `next` redirects.
 - Membership and capability resolution (`getAuthContext`, `requireUser`, `requireMember`, `requireCapability`) with a role → capability map.
@@ -74,14 +75,19 @@
 **Not yet implemented**
 
 - Invitation creation/acceptance and member management screens (Phase 3), and the `/platform`, `/lecturer`, `/student` landing pages (guards exist, pages do not).
-- Automated tenant-isolation tests, Vitest/Playwright infrastructure and CI.
-- Live verification against a provisioned Supabase project: no credentials are available in this workspace, so migrations were reviewed but not applied.
+- Vitest/Playwright application tests, CI and a hosted deployment.
+- Verification against a hosted Supabase project: the migrations were proven on a disposable PostgreSQL 16 cluster, not on a hosted project.
 
 **Verification performed**
 
 - `npm run lint` — pass.
 - `npm run build` — pass; `/institution` and `/no-access` are dynamic, `/` and the auth screens are static.
 - `next start` with a preview `Host` header: `/`, `/sign-in`, `/forgot-password` returned `200`; `/institution` and `/no-access` returned `307` to `/sign-in?next=…` while unauthenticated; `/auth/callback` without a code redirected to the sign-in error state.
+- `npm run db:test` against a disposable PostgreSQL 16.15 cluster: both migrations apply with `ON_ERROR_STOP=1`; all tenant-isolation assertions pass for two institutions. Reinstating the previous membership update policy reproduces `infinite recursion detected in policy`.
+
+**Follow-up fix (same phase)**
+
+- The original `memberships_update` policy read `institution_memberships` inside its own `WITH CHECK`, which made every membership update recurse. Update rights are now limited to admins, and invitation acceptance uses the `accept_invitation` definer RPC.
 
 ## 5. Project structure
 

@@ -45,6 +45,12 @@ Without Supabase values the public landing page and the auth screens still rende
 4. Set `NEXT_PUBLIC_SITE_URL` to the deployed origin so password-reset and verification emails link back correctly.
 5. In Supabase Auth → URL configuration, allow `http://localhost:3000/auth/callback` and the production equivalent.
 
+Database changes are covered by tenant-isolation tests that apply both migrations to a disposable PostgreSQL cluster:
+
+```bash
+npm run db:test
+```
+
 ## Routes
 
 | Route | Purpose |
