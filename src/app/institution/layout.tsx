@@ -13,6 +13,17 @@ export default async function InstitutionLayout({
 }) {
   const context = await requireMember();
 
+  const institutions = context.memberships
+    .filter((membership) => membership.institutionId)
+    .map((membership) => ({
+      id: membership.institutionId as string,
+      name: membership.institutionName ?? "Institution",
+    }))
+    .filter(
+      (institution, index, all) =>
+        all.findIndex((other) => other.id === institution.id) === index,
+    );
+
   return (
     <DashboardShell
       identity={{
@@ -20,6 +31,8 @@ export default async function InstitutionLayout({
         institutionName: context.institution?.name ?? "Institution",
         roleLabel: ROLE_LABELS[context.role],
         capabilities: context.capabilities,
+        institutions,
+        activeInstitutionId: context.institution?.id ?? null,
       }}
     >
       {children}

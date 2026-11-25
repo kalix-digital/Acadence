@@ -16,8 +16,8 @@
 | Phase | Module | Status | Exit criteria |
 | --- | --- | --- | --- |
 | 1 | Project foundation | **Complete** (tests pending) | App builds, shell renders, tokens shared, env documented |
-| 2 | Authentication & authorisation | **Complete** (hosted Supabase verification pending) | Sign-in/out/reset/verify work; RLS on all tables; role dashboards; isolation tests |
-| 3 | Institution management | Not started | Provision → configure → onboard; suspension; membership scopes |
+| 2 | Authentication & authorisation | **Complete** (merged to `main`; hosted Supabase verification pending) | Sign-in/out/reset/verify work; RLS on all tables; role dashboards; isolation tests |
+| 3 | Institution management | **Complete** (awaiting approval; hosted verification pending) | Provision → configure → onboard; suspension; membership scopes |
 | 4 | Academic administration | Not started | Sessions, programmes, courses, offerings, students, lecturers, groups, imports |
 | 5 | Classroom & facilities | Not started | Rooms, features, availability, bookings without overlap, utilisation |
 | 6 | Timetable management | Not started | Drafts, grid editing, publish, immutable versions, personal views, change requests |
@@ -89,7 +89,45 @@
 
 - The original `memberships_update` policy read `institution_memberships` inside its own `WITH CHECK`, which made every membership update recurse. Update rights are now limited to admins, and invitation acceptance uses the `accept_invitation` definer RPC.
 
-## 5. Project structure
+## 5. Phase 3 report (delivered)
+
+**Decisions applied before implementation**
+
+| Open question | Decision |
+| --- | --- |
+| OQ-003 | Invitation-only accounts. No public self-registration; the invited address creates an account only by accepting a single-use token. |
+| OQ-004 | `/institution` stays path-based, with an institution switcher for users who belong to several tenants. Subdomains deferred to Phase 17. |
+| OQ-005 | No impersonation in v1. Support visibility is read-only and tenant-scoped. |
+| Provisioning | Platform administrators provision institutions; there is no public request form. |
+| Scope | Institutions, settings, branding, memberships, invitations and activity. Campuses remain with the academic hierarchy in Phase 4–5. |
+
+**Implemented**
+
+- Migration `20261124120000_institution_management.sql`: `institution_invitations` (hashed single-use tokens, expiry, revocation), `institution_activity` (append-only audit trail written by definer triggers), `profiles.email`, a column-level guard that only platform administrators may change institution status or slug, and three definer RPCs: `create_invitation`, `invitation_preview`, `accept_invitation_token`.
+- Invitation authorisation is enforced in the database: platform admin, or institution admin of that institution only; platform roles cannot be invited; duplicate pending invitations and existing members are rejected; the invited address must match the accepting account.
+- Platform console: overview with real counts, institution list, provisioning form, institution detail with status controls, administrator invitation and activity trail.
+- Institution settings: profile, branding, timezone, working days, slot length, teaching day, weekly contact-hour limit and exam-teaching policy, validated server-side.
+- Members and roles: member list with real profile emails, role changes, suspension/reactivation, removal, invitation creation with a copyable one-time link, and invitation revocation. Administrators cannot change their own role, status or membership.
+- Public `/invite/[token]` acceptance screen: previews the institution and role, supports an existing account or creates one for the invited address, enforces email match, and reports accepted/revoked/expired/consumed states.
+- Invitation email through Resend when `RESEND_API_KEY` is set; otherwise the link is returned to the inviter. Tokens are stored only as SHA-256 hashes and are never logged.
+- Institution switcher backed by an http-only cookie that is re-validated against active memberships on every request; navigation and shell render platform or institution trees.
+- Profile emails are backfilled and maintained by the signup trigger, so members lists never invent identity data.
+
+**Not yet implemented**
+
+- Campuses, faculties and departments (Phase 4–5), and the institution onboarding checklist (FR-INST-008).
+- Platform analytics beyond counts, and support tooling (no impersonation by decision).
+- Hosted verification: the migrations are proven on a disposable PostgreSQL 16 cluster, not a hosted Supabase project; Resend delivery has not been exercised with a live API key.
+- Vitest/Playwright application tests and CI wiring.
+
+**Verification performed**
+
+- `npm run db:test` — both Phase 2 migrations plus the Phase 3 migration apply with `ON_ERROR_STOP=1`; `tenancy_isolation.sql` and `institution_management.sql` both pass. The Phase 3 suite covers authorisation of invitation creation (including cross-tenant and lecturer denial), token acceptance by the wrong email, token reuse, revocation and re-invitation, status-guard rejection for institution admins, role escalation, activity-trail visibility per tenant, and `anon` denial.
+- The first version of `create_invitation` failed the cross-tenant test: `auth_role()` is `NULL` for a non-member and `not (false or null)` is `NULL`, so the guard never fired. The guard now coalesces to `false`; the test that caught it is committed.
+- `npm run lint` — pass.
+- `npm run build` — pass; `/platform`, `/platform/institutions`, `/platform/institutions/new`, `/platform/institutions/[id]`, `/institution/members`, `/institution/settings` and `/invite/[token]` are dynamic.
+
+## 6. Project structure
 
 ```
 acadence/
@@ -100,29 +138,35 @@ acadence/
 │   │   ├── (public)/           public landing page
 │   │   ├── (auth)/             sign-in, forgot/reset password, auth actions
 │   │   ├── auth/               callback + confirm route handlers
-│   │   ├── institution/        authenticated institution shell and dashboard
+│   │   ├── institution/        dashboard, members/invitations, settings
+│   │   ├── invite/[token]/     public invitation acceptance
 │   │   ├── no-access/          signed-in account without a membership
-│   │   ├── platform/           planned: platform admin routes (guarded)
+│   │   ├── platform/           platform overview, institutions, provisioning
 │   │   ├── lecturer/           planned (guarded)
 │   │   ├── student/            planned (guarded)
 │   │   └── api/v1/             planned: integrations and webhooks
 │   ├── components/
 │   │   ├── ui/                 shadcn primitives
-│   │   ├── layout/             rail, sidebar, top bar, shell
+│   │   ├── layout/             rail, sidebar, top bar, shell, tenant switcher
 │   │   ├── dashboard/          dashboard widgets
-│   │   └── shared/             planned: tables, filters, states
+│   │   ├── institutions/       status badges, invite and settings forms
+│   │   ├── invite/             acceptance and account-creation forms
+│   │   ├── platform/           provisioning form
+│   │   └── shared/             submit button, copy field
 │   ├── modules/                planned: domain modules
 │   ├── services/               planned: cross-module business rules
 │   ├── lib/
 │   │   ├── supabase/           browser, server and proxy clients
 │   │   ├── auth/               session, membership, capability resolution
+│   │   ├── institutions/       tenant queries, invitations, validation
+│   │   ├── email/              Resend invitation delivery
 │   │   ├── validation/         planned: zod schemas
 │   │   └── utils.ts
 │   ├── config/                 site constants, navigation, env
 │   ├── data/                   Phase 1 sample data (to be replaced)
 │   └── types/                  database types (generated types in a later phase)
 ├── supabase/
-│   ├── migrations/             tenancy schema + RLS (Phase 2)
+│   ├── migrations/             tenancy schema + RLS (Phase 2), invitations + activity (Phase 3)
 │   ├── seed.sql
 │   └── tests/
 ├── tests/
@@ -133,7 +177,7 @@ acadence/
 └── package.json
 ```
 
-## 6. Git conventions
+## 7. Git conventions
 
 - Branches: `feat/<scope>`, `fix/<scope>`, `docs/<scope>`, `chore/<scope>`.
 - Commits: imperative subject scoped to the change, e.g. `feat(timetables): add draft publish transaction`. No mixed-purpose commits.
@@ -141,7 +185,7 @@ acadence/
 - `main` is protected: no force pushes, no direct commits; merges require green CI.
 - Stable implementations are not overwritten without a recorded justification (ADR or phase report).
 
-## 7. Traceability
+## 8. Traceability
 
 | Phase | Requirement groups | Screens |
 | --- | --- | --- |
@@ -158,9 +202,10 @@ acadence/
 | 13–14 | FR-AI-*, FR-DOC-* | `/student/study`, document history |
 | 15–16 | FR-AN-*, FR-SUB-* | `/shared/analytics`, `/platform/plans` |
 
-## 8. Revision history
+## 9. Revision history
 
 | Version | Date | Author | Change |
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-23 | Engineering | Roadmap with Phase 1 reported complete |
 | 1.1 | 2026-11-24 | Engineering | Phase 2 authentication, memberships and RLS reported |
+| 1.2 | 2026-11-25 | Engineering | Phase 2 merged; Phase 3 institution management, invitations and members reported complete pending approval |

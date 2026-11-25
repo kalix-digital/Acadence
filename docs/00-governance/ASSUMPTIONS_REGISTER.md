@@ -1,6 +1,6 @@
 # Acadence — Assumptions and Open Questions Register
 
-> **Document ID:** GOV-ASM-001 · **Version:** 1.0 · **Status:** Open · **Date:** 2026-11-23 · **Owner:** Product
+> **Document ID:** GOV-ASM-001 · **Version:** 1.1 · **Status:** Open (three items closed) · **Date:** 2026-11-25 · **Owner:** Product
 > **Related:** [Documentation Index](../README.md) · [PRD](../03-requirements/PRD.md) · [Roadmap](../10-implementation/IMPLEMENTATION_ROADMAP.md)
 
 This register lists every decision that cannot yet be made from available evidence. Nothing here is implemented as an assumption: the affected feature either stays configurable or waits for the decision.
@@ -20,9 +20,9 @@ This register lists every decision that cannot yet be made from available eviden
 | --- | --- | --- | --- | --- |
 | OQ-001 | Are plan prices and student bands acceptable to design partners? | Billing implementation and margin | Phase 16 | Open |
 | OQ-002 | Which payment provider (cards + bank transfer + reconciliation)? | Payments, webhooks, refunds | Phase 16 | Open |
-| OQ-003 | Do students self-register or receive invitations only? | Auth flow, abuse prevention, data quality | Phase 2 | Open |
-| OQ-004 | Should institution access use path-based routing (`/institution/[slug]`) or subdomains? | Tenant resolution, branding, cookie scope | Phase 3 | Open (path-based assumed for v1) |
-| OQ-005 | Is support impersonation allowed, and under what audit/consent rules? | Security model and audit requirements | Phase 2 | Open (disabled until decided) |
+| OQ-003 | Do students self-register or receive invitations only? | Auth flow, abuse prevention, data quality | Phase 2 | **Closed** — invitation-only |
+| OQ-004 | Should institution access use path-based routing (`/institution/[slug]`) or subdomains? | Tenant resolution, branding, cookie scope | Phase 3 | **Closed** — `/institution` + switcher |
+| OQ-005 | Is support impersonation allowed, and under what audit/consent rules? | Security model and audit requirements | Phase 2 | **Closed** — none in v1 |
 | OQ-006 | What is the canonical workload formula (contact hours, supervision, marking weights)? | Workload reports and overload warnings | Phase 9 | Open (contact hours + configurable weights implemented) |
 | OQ-007 | Are examination timetables part of v1 or a separate module? | Data model and UI scope | Phase 6 | Open (v1 covers teaching timetables; exam periods only block teaching) |
 | OQ-008 | Which AI provider and model tiers, and what is one credit worth? | Cost control and capability | Phase 13 | Open (provider abstracted server-side) |
@@ -46,9 +46,13 @@ This register lists every decision that cannot yet be made from available eviden
 | ID | Decision | Date | Reference |
 | --- | --- | --- | --- |
 | — | Modular monolith, Next.js + Supabase + Vercel, RLS isolation, TypeScript engine first | 2026-11-23 | ADR-001 … ADR-004 |
+| OQ-003 | Accounts are invitation-only. There is no public sign-up; an invitation is a single-use email token, and the invited address gets an account only by accepting it. | 2026-11-25 | [AUTH_AND_MEMBERSHIPS §4.2](../05-database/AUTH_AND_MEMBERSHIPS.md) |
+| OQ-004 | Institution routes stay at `/institution`; the active tenant comes from a validated membership and a cookie-backed switcher. Path slugs and subdomains are deferred to Phase 17. | 2026-11-25 | [Roadmap §5](../10-implementation/IMPLEMENTATION_ROADMAP.md) |
+| OQ-005 | Support operators and platform administrators cannot impersonate users in v1. Support has read-only, tenant-scoped visibility and every administrative action is attributed by `auth.uid()`. | 2026-11-25 | [Roadmap §5](../10-implementation/IMPLEMENTATION_ROADMAP.md) |
 
 ## Revision history
 
 | Version | Date | Author | Change |
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-23 | Product | Initial register |
+| 1.1 | 2026-11-25 | Product | Closed OQ-003 (invitation-only), OQ-004 (`/institution` with switcher) and OQ-005 (no impersonation) for Phase 3 |

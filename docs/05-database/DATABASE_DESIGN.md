@@ -41,6 +41,8 @@ erDiagram
   profiles ||--o{ institution_memberships : holds
   institutions ||--o{ institution_memberships : scopes
   institutions ||--|| institution_settings : configures
+  institutions ||--o{ institution_invitations : invites
+  institutions ||--o{ institution_activity : logs
   institutions ||--o{ campuses : has
   campuses ||--o{ faculties : contains
   faculties ||--o{ departments : contains
@@ -89,10 +91,12 @@ erDiagram
 
 | Table | Key columns | Constraints / notes |
 | --- | --- | --- |
-| `profiles` | `id` (= `auth.users.id`), `full_name`, `avatar_url`, `phone` | No role column: roles live in memberships only |
+| `profiles` | `id` (= `auth.users.id`), `full_name`, `email`, `avatar_url`, `phone` | No role column: roles live in memberships only. `email` is copied from `auth.users` on signup and backfilled in Phase 3 so member lists show real identities |
 | `institutions` | `id`, `name`, `slug`, `type`, `status`, `logo_url`, `brand_primary`, `brand_accent`, `timezone` | `slug` unique; `timezone` default `Africa/Lagos` |
 | `institution_settings` | `institution_id` PK, `working_days smallint[]`, `slot_minutes`, `day_start`, `day_end`, `default_max_contact_hours`, `allow_teaching_in_exams`, `hard_rule_overrides jsonb` | Configurable academic rules (SRS FR-INST-007) |
 | `institution_memberships` | `id`, `institution_id`, `user_id`, `role`, `faculty_id`, `department_id`, `status`, `invited_email`, `accepted_at` | `unique (institution_id, user_id)`; scope nullable only for institution-level roles; CHECK ensures role/scope consistency |
+| `institution_invitations` | `id`, `institution_id`, `email`, `role`, `token_hash`, `invited_by`, `expires_at`, `accepted_at`, `revoked_at` | `token_hash` unique; partial unique index on `(institution_id, lower(email))` for live invitations; CHECK restricts invitable roles; only a SHA-256 hash is stored |
+| `institution_activity` | `id` (identity), `institution_id`, `actor_id`, `action`, `summary`, `metadata jsonb`, `created_at` | Append-only: select for institution admins/support/platform; rows written by definer triggers, never by `authenticated` directly |
 
 ### 4.2 Academic structure
 
@@ -276,6 +280,8 @@ $$;
 
 Fixtures create two institutions with independent admins. Tests assert: direct table reads return only own rows; cross-tenant IDs produce empty results or constraint/403 errors; service functions reject foreign institution IDs; storage signed URLs cannot be requested across tenants.
 
+Phase 3 extends this with `supabase/tests/institution_management.sql`: invitation tokens are unreadable as table rows, `create_invitation` refuses cross-tenant and lecturer callers, acceptance requires the invited email, tokens are single-use, and activity rows never leak across tenants. The institution status/slug guard is a column-level trigger because RLS cannot restrict individual columns.
+
 ## 8. Migrations and seeding
 
 - Every change is a new file `supabase/migrations/YYYYMMDDHHMMSS_description.sql`; no edits to applied migrations.
@@ -300,3 +306,4 @@ Fixtures create two institutions with independent admins. Tests assert: direct t
 | Version | Date | Author | Change |
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-23 | Database Architecture | Initial schema, ERD, constraints and RLS model |
+| 1.1 | 2026-11-25 | Engineering | Added Phase 3 invitation, activity and profile-email tables to the ERD, catalogue and isolation notes |

@@ -33,3 +33,15 @@ export async function requireCapability(
   }
   return context;
 }
+
+/**
+ * Platform administration. Requires an explicit platform_admin membership;
+ * the database enforces the same rule for every cross-tenant read or write.
+ */
+export async function requirePlatformAdmin(): Promise<AuthContext> {
+  const context = await requireUser();
+  if (!context.capabilities.includes("manage_platform")) {
+    redirect("/no-access?reason=forbidden");
+  }
+  return context;
+}

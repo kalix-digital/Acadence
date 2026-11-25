@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarNav } from "@/components/layout/app-sidebar";
+import { InstitutionSwitcher } from "@/components/layout/institution-switcher";
+import { sectionsFor } from "@/config/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +54,9 @@ function initials(name: string) {
 
 export function Topbar({ identity }: { identity: ShellIdentity }) {
   const router = useRouter();
+  const variant = identity.variant ?? "institution";
+  const homeHref = identity.homeHref ?? (variant === "platform" ? "/platform" : "/institution");
+  const institutions = identity.institutions ?? [];
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -78,6 +83,7 @@ export function Topbar({ identity }: { identity: ShellIdentity }) {
           <SidebarNav
             capabilities={identity.capabilities}
             roleLabel={identity.roleLabel}
+            sections={sectionsFor(variant)}
             onNavigate={() => setMobileOpen(false)}
           />
         </SheetContent>
@@ -85,14 +91,23 @@ export function Topbar({ identity }: { identity: ShellIdentity }) {
 
       <nav aria-label="Breadcrumb" className="hidden items-center gap-1.5 text-sm md:flex">
         <Link
-          href="/institution"
+          href={homeHref}
           className="max-w-[16rem] truncate text-muted-foreground transition-colors hover:text-foreground"
         >
-          {identity.institutionName}
+          {variant === "platform" ? "Acadence platform" : identity.institutionName}
         </Link>
         <ChevronRight className="size-3.5 text-muted-foreground/50" />
-        <span className="font-medium">Dashboard</span>
+        <span className="font-medium">
+          {variant === "platform" ? "Overview" : "Dashboard"}
+        </span>
       </nav>
+
+      {variant === "institution" && institutions.length > 1 && (
+        <InstitutionSwitcher
+          institutions={institutions}
+          activeId={identity.activeInstitutionId ?? null}
+        />
+      )}
 
       <div className="relative ml-auto w-full max-w-sm">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -172,8 +187,10 @@ export function Topbar({ identity }: { identity: ShellIdentity }) {
             <DropdownMenuItem>
               <UserRound /> Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Building2 /> Switch institution
+            <DropdownMenuItem asChild>
+              <Link href={homeHref}>
+                <Building2 /> {variant === "platform" ? "Platform home" : "Institution home"}
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <LifeBuoy /> Support

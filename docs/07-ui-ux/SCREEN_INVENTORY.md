@@ -1,29 +1,28 @@
 # Acadence — Screen Inventory
 
-> **Document ID:** UX-SCR-001 · **Version:** 1.0 · **Status:** Phase 1 implemented; remainder planned · **Date:** 2026-11-23 · **Owner:** Design
+> **Document ID:** UX-SCR-001 · **Version:** 1.1 · **Status:** Phases 1–3 implemented; remainder planned · **Date:** 2026-11-25 · **Owner:** Design
 > **Related:** [Design System](DESIGN_SYSTEM.md) · [PRD](../03-requirements/PRD.md) · [Roadmap](../10-implementation/IMPLEMENTATION_ROADMAP.md)
 
 ## 1. Route map
 
 | Route | Screen | Roles | Phase | Status |
 | --- | --- | --- | --- | --- |
-| `/` | Institution dashboard | Institution/faculty/department admin | 1 | **Implemented** (sample data) |
-| `(public)/` | Marketing landing + sign-in entry | Public | 2 | Planned |
-| `(auth)/sign-in` | Sign in | Public | 2 | Planned |
-| `(auth)/forgot-password` | Password reset request | Public | 2 | Planned |
-| `(auth)/reset-password` | New password | Public (token) | 2 | Planned |
-| `(auth)/verify-email` | Email verification | Public (token) | 2 | Planned |
-| `(auth)/invite/[token]` | Accept invitation | Invited user | 2 | Planned |
-| `/platform` | Platform overview | Platform admin, support | 3 | Planned |
-| `/platform/institutions` | Institution list | Platform admin | 3 | Planned |
-| `/platform/institutions/new` | Provision institution | Platform admin | 3 | Planned |
-| `/platform/institutions/[id]` | Institution detail (profile, campuses, admins, status) | Platform admin | 3 | Planned |
+| `/` | Public landing + sign-in entry | Public | 2 | **Implemented** |
+| `(auth)/sign-in` | Sign in | Public | 2 | **Implemented** |
+| `(auth)/forgot-password` | Password reset request | Public | 2 | **Implemented** |
+| `(auth)/reset-password` | New password | Public (token) | 2 | **Implemented** |
+| `(auth)/verify-email` | Email verification | Public (token) | 2 | Planned (hosted by Supabase confirmation) |
+| `/invite/[token]` | Accept invitation / create invited account | Invited user | 3 | **Implemented** |
+| `/platform` | Platform overview | Platform admin | 3 | **Implemented** |
+| `/platform/institutions` | Institution list | Platform admin | 3 | **Implemented** |
+| `/platform/institutions/new` | Provision institution | Platform admin | 3 | **Implemented** |
+| `/platform/institutions/[id]` | Institution detail (profile, admins, status, invitations, activity) | Platform admin | 3 | **Implemented** |
 | `/platform/plans` | Plans and subscriptions | Platform admin | 16 | Planned |
 | `/platform/audit` | Audit search | Platform admin, support | 18 | Planned |
-| `/institution` | Institution overview | Institution admin | 3 | Planned |
-| `/institution/settings` | Profile, branding, academic defaults | Institution admin | 3 | Planned |
-| `/institution/members` | Members, invitations, roles | Institution admin | 3 | Planned |
-| `/institution/campuses` | Campuses, buildings | Institution admin | 3–5 | Planned |
+| `/institution` | Institution overview | Institution admin | 3 | **Implemented** (sample metrics until Phase 15) |
+| `/institution/settings` | Profile, branding, academic defaults | Institution admin | 3 | **Implemented** |
+| `/institution/members` | Members, invitations, roles | Institution admin | 3 | **Implemented** |
+| `/institution/campuses` | Campuses, buildings | Institution admin | 4–5 | Planned (deferred to the academic hierarchy) |
 | `/institution/academics` | Sessions, semesters, programmes, courses | Academic admin | 4 | Planned |
 | `/institution/academics/offerings` | Course offerings and lecturer assignment | Dept admin | 4 | Planned |
 | `/institution/academics/students` | Students, groups, imports | Academic admin | 4 | Planned |
@@ -66,3 +65,4 @@ Every screen must include:
 | Version | Date | Author | Change |
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-23 | Design | Initial inventory |
+| 1.1 | 2026-11-25 | Design | Marked Phase 2 and Phase 3 routes implemented; campuses deferred |

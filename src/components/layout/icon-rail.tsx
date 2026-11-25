@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { GraduationCap } from "lucide-react";
-import { iconRailItems } from "@/config/navigation";
+import { railItemsFor } from "@/config/navigation";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -22,14 +22,17 @@ function initials(name: string) {
 }
 
 export function IconRail({ identity }: { identity: ShellIdentity }) {
-  const items = iconRailItems.filter(
+  const homeHref =
+    identity.homeHref ??
+    (identity.variant === "platform" ? "/platform" : "/institution");
+  const items = railItemsFor(identity.variant ?? "institution").filter(
     (item) => !item.capability || identity.capabilities.includes(item.capability),
   );
 
   return (
     <aside className="hidden w-16 shrink-0 flex-col items-center gap-2 border-r border-sidebar-border bg-sidebar/80 py-5 lg:flex">
       <Link
-        href="/institution"
+        href={homeHref}
         aria-label="Acadence home"
         className="mb-4 grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
       >

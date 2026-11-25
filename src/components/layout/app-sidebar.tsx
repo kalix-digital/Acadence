@@ -88,10 +88,12 @@ export function SidebarNav({
   capabilities,
   roleLabel,
   onNavigate,
+  sections = navigation,
 }: {
   capabilities: Capability[];
   roleLabel: string;
   onNavigate?: () => void;
+  sections?: NavSection[];
 }) {
   return (
     <div className="flex h-full flex-col">
@@ -110,7 +112,7 @@ export function SidebarNav({
       </div>
 
       <div className="flex-1 space-y-5 overflow-y-auto px-2 pb-4">
-        {navigation.map((section) => (
+        {sections.map((section) => (
           <NavSectionBlock
             key={section.id}
             section={section}

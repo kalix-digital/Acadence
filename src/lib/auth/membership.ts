@@ -1,4 +1,5 @@
 import type { User } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
 import { isSupabaseConfigured } from "@/config/env";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -6,6 +7,9 @@ import {
   type Capability,
 } from "@/lib/auth/capabilities";
 import type { MembershipRole } from "@/types/database";
+
+/** Cookie that selects the active institution for a multi-membership user. */
+export const ACTIVE_INSTITUTION_COOKIE = "acadence.active_institution";
 
 export type MembershipSummary = {
   id: string;
@@ -84,7 +88,19 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     departmentId: row.department_id,
   }));
 
-  const membership = memberships[0] ?? null;
+  // Phase 3 decision OQ-004: path-based routing is deferred, so the active
+  // tenant is resolved here from a cookie. A user who belongs to several
+  // institutions picks one in the shell switcher; the choice is re-validated
+  // against their active memberships on every request.
+  const cookieStore = await cookies();
+  const preferred = cookieStore.get(ACTIVE_INSTITUTION_COOKIE)?.value;
+  const membership =
+    memberships.find(
+      (item) => item.institutionId && item.institutionId === preferred,
+    ) ??
+    memberships.find((item) => item.institutionId) ??
+    memberships[0] ??
+    null;
 
   return {
     user: { id: user.id, email: user.email ?? null, name: displayName(user) },

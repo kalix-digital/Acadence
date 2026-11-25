@@ -62,3 +62,37 @@ $$;
 
 grant usage on schema test to anon, authenticated, service_role;
 grant execute on function test.assert(boolean, text) to anon, authenticated, service_role;
+
+-- Asserts that a statement fails with a specific SQLSTATE. Runs as the caller
+-- (SECURITY INVOKER) so RLS and column guards are still exercised.
+create or replace function test.expect_error(
+  p_sql text,
+  p_state text,
+  p_message text
+)
+returns void
+language plpgsql
+as $$
+declare
+  v_state text;
+  v_message text;
+begin
+  begin
+    execute p_sql;
+  exception
+    when others then
+      get stacked diagnostics v_state = returned_sqlstate, v_message = message_text;
+      if v_state = p_state then
+        return;
+      end if;
+      raise exception 'FAIL: % (expected SQLSTATE %, got %: %)',
+        p_message, p_state, v_state, v_message;
+  end;
+
+  raise exception 'FAIL: % (expected SQLSTATE %, but the statement succeeded)',
+    p_message, p_state;
+end;
+$$;
+
+grant execute on function test.expect_error(text, text, text)
+  to anon, authenticated, service_role;

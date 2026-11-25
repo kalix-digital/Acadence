@@ -79,6 +79,16 @@ Endpoints are introduced by the phase that implements them. All are institution-
 | `POST` | `/api/v1/institutions/{id}/members/invite` | institution admin | Invite by email |
 | `PATCH` | `/api/v1/institutions/{id}/members/{membershipId}` | institution admin | Role/scope change |
 
+Phase 3 ships these operations as Server Actions over RLS rather than as public REST routes; the tables and RPCs below are the stable contract. Invitation creation, preview and acceptance are database functions so authorisation and token consumption happen in one transaction:
+
+| Function | Caller | Contract |
+| --- | --- | --- |
+| `create_invitation(p_institution, p_email, p_role, p_expires_in_days)` | platform admin, or that institution's institution admin | Returns the raw token once; stores only its SHA-256 hash. Rejects platform roles, duplicates, existing members and foreign tenants with `42501`/`23505` |
+| `invitation_preview(p_token)` | `anon`/`authenticated` holding the token | Returns institution name, invited email, role and state (`pending`/`accepted`/`revoked`/`expired`). Nothing else about the tenant |
+| `accept_invitation_token(p_token)` | authenticated user whose email matches the invitation | Creates or reactivates the membership and consumes the token atomically. `42501` on email mismatch, `23505` when used/revoked/expired |
+
+Server Action mutation results follow §4; forms surface `fields` inline. Invitation links are returned once in the action result (`inviteUrl`) because the token cannot be recovered afterwards.
+
 ### 3.2 Academic administration (Phase 4)
 
 | Method | Path | Capability | Purpose |
@@ -209,3 +219,4 @@ Rate limiting is server-side and returns `429` with `Retry-After`; the UI disabl
 | Version | Date | Author | Change |
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-23 | Engineering | Initial surface conventions and endpoint catalogue |
+| 1.1 | 2026-11-25 | Engineering | Documented the Phase 3 invitation RPC contract and Server Action delivery |

@@ -5,9 +5,11 @@ import {
   CalendarDays,
   CalendarRange,
   ClipboardList,
+  CreditCard,
   GraduationCap,
   LayoutDashboard,
   Library,
+  ScrollText,
   Settings,
   Sparkles,
   Users,
@@ -111,6 +113,12 @@ export const navigation: NavSection[] = [
     label: "People",
     items: [
       {
+        label: "Members & Roles",
+        href: "/institution/members",
+        icon: Users,
+        capability: "manage_members",
+      },
+      {
         label: "Students",
         href: "#",
         icon: GraduationCap,
@@ -132,28 +140,63 @@ export const navigation: NavSection[] = [
     items: [
       {
         label: "Institution Settings",
-        href: "#",
+        href: "/institution/settings",
         icon: Settings,
         capability: "manage_institution",
-        phase: 3,
-      },
-      {
-        label: "Members & Roles",
-        href: "#",
-        icon: Users,
-        capability: "manage_members",
-        phase: 3,
       },
     ],
   },
 ];
 
-export const iconRailItems: (NavItem & { capability?: Capability })[] = [
+export const platformNavigation: NavSection[] = [
+  {
+    id: "platform",
+    label: "Platform",
+    items: [
+      {
+        label: "Overview",
+        href: "/platform",
+        icon: LayoutDashboard,
+      },
+      {
+        label: "Institutions",
+        href: "/platform/institutions",
+        icon: Building2,
+      },
+      {
+        label: "Plans & subscriptions",
+        href: "#",
+        icon: CreditCard,
+        phase: 16,
+      },
+    ],
+  },
+  {
+    id: "governance",
+    label: "Governance",
+    items: [
+      {
+        label: "Audit log",
+        href: "#",
+        icon: ScrollText,
+        phase: 18,
+      },
+    ],
+  },
+];
+
+export const iconRailItems: NavItem[] = [
   {
     label: "Dashboard",
     icon: LayoutDashboard,
     href: "/institution",
     capability: "view_institution_dashboard",
+  },
+  {
+    label: "Members & roles",
+    icon: Users,
+    href: "/institution/members",
+    capability: "manage_members",
   },
   {
     label: "Academic administration",
@@ -182,7 +225,28 @@ export const iconRailItems: (NavItem & { capability?: Capability })[] = [
   {
     label: "Settings",
     icon: Settings,
-    href: "#",
+    href: "/institution/settings",
     capability: "manage_institution",
   },
 ];
+
+export const platformIconRailItems: NavItem[] = [
+  {
+    label: "Platform overview",
+    icon: LayoutDashboard,
+    href: "/platform",
+  },
+  {
+    label: "Institutions",
+    icon: Building2,
+    href: "/platform/institutions",
+  },
+];
+
+export function sectionsFor(variant: "institution" | "platform") {
+  return variant === "platform" ? platformNavigation : navigation;
+}
+
+export function railItemsFor(variant: "institution" | "platform") {
+  return variant === "platform" ? platformIconRailItems : iconRailItems;
+}

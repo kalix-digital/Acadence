@@ -3,6 +3,7 @@ import { IconRail } from "@/components/layout/icon-rail";
 import { SidebarNav } from "@/components/layout/app-sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { sectionsFor } from "@/config/navigation";
 import type { Capability } from "@/lib/auth/capabilities";
 
 export type ShellIdentity = {
@@ -10,6 +11,12 @@ export type ShellIdentity = {
   institutionName: string;
   roleLabel: string;
   capabilities: Capability[];
+  /** Which navigation tree to render. */
+  variant?: "institution" | "platform";
+  homeHref?: string;
+  /** Institutions the user can switch between (Phase 3, OQ-004). */
+  institutions?: { id: string; name: string }[];
+  activeInstitutionId?: string | null;
 };
 
 export function DashboardShell({
@@ -19,6 +26,9 @@ export function DashboardShell({
   children: ReactNode;
   identity: ShellIdentity;
 }) {
+  const variant = identity.variant ?? "institution";
+  const sections = sectionsFor(variant);
+
   return (
     <TooltipProvider delayDuration={150}>
       <div className="flex min-h-svh bg-background">
@@ -28,6 +38,7 @@ export function DashboardShell({
             <SidebarNav
               capabilities={identity.capabilities}
               roleLabel={identity.roleLabel}
+              sections={sections}
             />
           </div>
         </aside>
