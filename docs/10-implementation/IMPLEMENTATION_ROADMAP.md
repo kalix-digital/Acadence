@@ -20,7 +20,7 @@
 | 3 | Institution management | **Complete** (awaiting approval; hosted verification pending) | Provision → configure → onboard; suspension; membership scopes |
 | 4 | Academic administration | **Complete** (awaiting approval) | Campuses, faculties, departments, sessions, semesters, programmes, courses, curricula |
 | 4b | People, groups, offerings & calendar | **Complete** (merged to `main`; hosted verification pending) | Students, lecturers, cohort groups, course offerings, academic calendar, CSV imports |
-| 5 | Classroom & facilities | **Complete** (awaiting approval; hosted verification pending) | Buildings, rooms, features, availability, bookings without overlap, utilisation |
+| 5 | Classroom & facilities | **Complete** (merged to `main`; hosted verification pending) | Buildings, rooms, features, availability, bookings without overlap, utilisation |
 | 6 | Timetable management | Not started | Drafts, grid editing, publish, immutable versions, personal views, change requests |
 | 7 | Conflict detection | Not started | All conflict kinds, severity, explanations, publication block, concurrency safety |
 | 8 | Timetable generation | Not started | Feasible drafts from constraints, unsatisfiable reporting, cancellable runs |
@@ -325,3 +325,4 @@ acadence/
 | 1.5 | 2026-11-27 | Engineering | Phase 4b merged to `main`; Phase 5 classroom and facilities management opened |
 | 1.6 | 2026-11-27 | Engineering | Phase 5 buildings, rooms, feature catalogue, binding availability, non-overlapping bookings and the utilisation report reported complete pending approval |
 | 1.7 | 2026-11-27 | Engineering | Utilisation numerator clipped to the teaching-day availability used by the denominator, with out-of-scope bookings reported as excluded; Phase 5 committed |
+| 1.8 | 2026-11-27 | Engineering | Phase 5 merged to `main` |
