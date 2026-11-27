@@ -1,6 +1,6 @@
 # Acadence — Technical Implementation Roadmap
 
-> **Document ID:** IMP-001 · **Version:** 1.4 · **Status:** Active · **Date:** 2026-11-27 · **Owner:** Engineering Lead
+> **Document ID:** IMP-001 · **Version:** 1.5 · **Status:** Active · **Date:** 2026-11-27 · **Owner:** Engineering Lead
 > **Related:** [SRS](../03-requirements/SRS.md) · [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [Testing](../09-testing/TESTING_STRATEGY.md) · [Screen Inventory](../07-ui-ux/SCREEN_INVENTORY.md)
 
 ## 1. Delivery rules
@@ -19,7 +19,7 @@
 | 2 | Authentication & authorisation | **Complete** (merged to `main`; hosted Supabase verification pending) | Sign-in/out/reset/verify work; RLS on all tables; role dashboards; isolation tests |
 | 3 | Institution management | **Complete** (awaiting approval; hosted verification pending) | Provision → configure → onboard; suspension; membership scopes |
 | 4 | Academic administration | **Complete** (awaiting approval) | Campuses, faculties, departments, sessions, semesters, programmes, courses, curricula |
-| 4b | People, groups, offerings & calendar | **Complete** (awaiting approval; hosted verification pending) | Students, lecturers, cohort groups, course offerings, academic calendar, CSV imports |
+| 4b | People, groups, offerings & calendar | **Complete** (merged to `main`; hosted verification pending) | Students, lecturers, cohort groups, course offerings, academic calendar, CSV imports |
 | 5 | Classroom & facilities | Not started | Rooms, features, availability, bookings without overlap, utilisation |
 | 6 | Timetable management | Not started | Drafts, grid editing, publish, immutable versions, personal views, change requests |
 | 7 | Conflict detection | Not started | All conflict kinds, severity, explanations, publication block, concurrency safety |
@@ -282,3 +282,4 @@ acadence/
 | 1.2 | 2026-11-25 | Engineering | Phase 2 merged; Phase 3 institution management, invitations and members reported complete pending approval |
 | 1.3 | 2026-11-25 | Engineering | Phase 3 merged to `main`; Phase 4 academic structure reported complete pending approval, with people and scheduling records deferred to 4b |
 | 1.4 | 2026-11-27 | Engineering | Phase 4b students, lecturers, cohort groups, course offerings, academic calendar and CSV imports reported complete pending approval |
+| 1.5 | 2026-11-27 | Engineering | Phase 4b merged to `main`; Phase 5 classroom and facilities management opened |
