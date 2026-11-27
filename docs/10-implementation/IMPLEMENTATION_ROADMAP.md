@@ -1,6 +1,6 @@
 # Acadence — Technical Implementation Roadmap
 
-> **Document ID:** IMP-001 · **Version:** 1.0 · **Status:** Active · **Date:** 2026-11-23 · **Owner:** Engineering Lead
+> **Document ID:** IMP-001 · **Version:** 1.3 · **Status:** Active · **Date:** 2026-11-25 · **Owner:** Engineering Lead
 > **Related:** [SRS](../03-requirements/SRS.md) · [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [Testing](../09-testing/TESTING_STRATEGY.md) · [Screen Inventory](../07-ui-ux/SCREEN_INVENTORY.md)
 
 ## 1. Delivery rules
@@ -18,7 +18,7 @@
 | 1 | Project foundation | **Complete** (tests pending) | App builds, shell renders, tokens shared, env documented |
 | 2 | Authentication & authorisation | **Complete** (merged to `main`; hosted Supabase verification pending) | Sign-in/out/reset/verify work; RLS on all tables; role dashboards; isolation tests |
 | 3 | Institution management | **Complete** (awaiting approval; hosted verification pending) | Provision → configure → onboard; suspension; membership scopes |
-| 4 | Academic administration | Not started | Sessions, programmes, courses, offerings, students, lecturers, groups, imports |
+| 4 | Academic administration | **Complete** (awaiting approval; people/scheduling records and imports deferred to 4b) | Campuses, faculties, departments, sessions, semesters, programmes, courses, curricula |
 | 5 | Classroom & facilities | Not started | Rooms, features, availability, bookings without overlap, utilisation |
 | 6 | Timetable management | Not started | Drafts, grid editing, publish, immutable versions, personal views, change requests |
 | 7 | Conflict detection | Not started | All conflict kinds, severity, explanations, publication block, concurrency safety |
@@ -127,6 +127,40 @@
 - `npm run lint` — pass.
 - `npm run build` — pass; `/platform`, `/platform/institutions`, `/platform/institutions/new`, `/platform/institutions/[id]`, `/institution/members`, `/institution/settings` and `/invite/[token]` are dynamic.
 
+## 5.1 Phase 4 report (delivered)
+
+| Field | Value |
+| --- | --- |
+| Scope | Campuses, faculties, departments, academic sessions, semesters, programmes, courses and programme curricula. |
+| Deferred by decision | Students, lecturers, student groups, course offerings, the academic calendar and CSV imports were separated from this phase so the hierarchy stabilises before people and scheduling records depend on it. |
+| Migration | `20261125120000_academic_structure.sql` |
+| Tests | `supabase/tests/academic_structure.sql` |
+
+**Implemented**
+
+- Hierarchy `campuses → faculties → departments`. `campus_id` is optional on a faculty (OQ-016), and every parent reference is a composite `(institution_id, id)` foreign key, so a record can never point at another tenant's parent — not even for `service_role`.
+- Academic sessions and semesters with date-ordering constraints, and `programme_courses` linking programmes to shared courses (OQ-017) with a level and required/elective flag.
+- Writes are role-scoped by `public.can_manage_academic_unit(institution_id, faculty_id, department_id)`: institution admins write anywhere in the institution, faculty admins inside their faculty, department admins inside their department. Reads are open to every active member of the tenant.
+- Archive-only removal (OQ-018): `archived_at` on every table, no DELETE policy and no DELETE grant for `authenticated`.
+- Every create, update, archive and restore is written to `institution_activity` by one definer trigger as `academic.<entity>.<action>`.
+- Application: `/institution/academics` overview (counts, hierarchy, section links, recent academic changes) plus screens for campuses, faculties, departments, sessions and semesters, programmes, and courses and curriculum. Each has a validated create/edit form, search, active/archived filter, pagination and archive/restore.
+- Navigation and the icon rail link to the academic screens instead of a Phase 4 placeholder.
+- Validation is repeated server-side: codes, name lengths, unit and level ranges, date ordering, duplicate-code and RLS refusals are mapped to field-level messages.
+
+**Not yet implemented**
+
+- Students, lecturers, student groups, course offerings, the academic calendar and CSV/Excel imports (Phase 4b).
+- Institution onboarding checklist (FR-INST-008).
+- A single view of the whole academic tree; the hierarchy is browsed level by level.
+- Requesting a wider scope from the UI: a faculty or department administrator can read the tenant but is refused writes outside their scope by the database.
+
+**Verification performed**
+
+- `npm run db:test` — four migrations apply with `ON_ERROR_STOP=1`; `tenancy_isolation.sql`, `institution_management.sql` and `academic_structure.sql` pass. Phase 4 coverage: institution/faculty/department administrator scope, cross-tenant insert refusal, cross-tenant UPDATE filtered to zero rows, composite-FK rejection of a foreign campus, duplicate codes, session/semester date rules, one course required by two programmes, archive and restore with activity records, missing DELETE privilege, platform cross-tenant visibility, and `anon` denial.
+- Two defects were caught by the suite while writing it: SQL helpers that read `departments`/`programmes` were defined before those tables existed (moved below the DDL), and the activity trigger read `new.title` on tables without that column (replaced with `to_jsonb` access).
+- `npm run lint` — pass, no warnings.
+- `npm run build` — pass; `/institution/academics` and its six sub-routes are dynamic.
+
 ## 6. Project structure
 
 ```
@@ -138,7 +172,9 @@ acadence/
 │   │   ├── (public)/           public landing page
 │   │   ├── (auth)/             sign-in, forgot/reset password, auth actions
 │   │   ├── auth/               callback + confirm route handlers
-│   │   ├── institution/        dashboard, members/invitations, settings
+│   │   ├── institution/        dashboard, members/invitations, settings,
+│   │   │                       academics/ (campuses, faculties, departments,
+│   │   │                       sessions, programmes, courses, curriculum)
 │   │   ├── invite/[token]/     public invitation acceptance
 │   │   ├── no-access/          signed-in account without a membership
 │   │   ├── platform/           platform overview, institutions, provisioning
@@ -209,3 +245,4 @@ acadence/
 | 1.0 | 2026-11-23 | Engineering | Roadmap with Phase 1 reported complete |
 | 1.1 | 2026-11-24 | Engineering | Phase 2 authentication, memberships and RLS reported |
 | 1.2 | 2026-11-25 | Engineering | Phase 2 merged; Phase 3 institution management, invitations and members reported complete pending approval |
+| 1.3 | 2026-11-25 | Engineering | Phase 3 merged to `main`; Phase 4 academic structure reported complete pending approval, with people and scheduling records deferred to 4b |

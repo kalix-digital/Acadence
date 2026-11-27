@@ -1,6 +1,6 @@
 # Acadence — Database Design
 
-> **Document ID:** DBD-001 · **Version:** 1.0 · **Status:** Approved for migration authoring · **Date:** 2026-11-23 · **Owner:** Database Architecture
+> **Document ID:** DBD-001 · **Version:** 1.2 · **Status:** Approved for migration authoring · **Date:** 2026-11-25 · **Owner:** Database Architecture
 > **Related:** [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [SRS](../03-requirements/SRS.md) · [API](../06-api/API_SPECIFICATION.md) · [ADR-003](../13-adr/ADR-003-rls-multi-tenancy.md)
 
 ## 1. Principles
@@ -48,6 +48,8 @@ erDiagram
   faculties ||--o{ departments : contains
   departments ||--o{ programmes : offers
   departments ||--o{ courses : owns
+  programmes ||--o{ programme_courses : includes
+  courses ||--o{ programme_courses : listed_in
   institutions ||--o{ academic_sessions : runs
   academic_sessions ||--o{ semesters : splits
   departments ||--o{ student_groups : groups
@@ -102,13 +104,14 @@ erDiagram
 
 | Table | Key columns | Constraints |
 | --- | --- | --- |
-| `campuses` | `id`, `institution_id`, `name`, `code`, `address` | `unique (institution_id, code)` |
-| `faculties` | `id`, `institution_id`, `campus_id`, `name`, `code` | `unique (institution_id, code)`; composite FK to campus |
-| `departments` | `id`, `institution_id`, `faculty_id`, `name`, `code` | `unique (institution_id, code)` |
-| `academic_sessions` | `id`, `institution_id`, `name`, `starts_on`, `ends_on`, `status` | `unique (institution_id, name)`; CHECK `ends_on > starts_on` |
-| `semesters` | `id`, `institution_id`, `session_id`, `name`, `sequence`, `teaching_starts_on`, `teaching_ends_on`, `exam_starts_on`, `exam_ends_on`, `status` | `unique (session_id, sequence)`; CHECK date ordering |
-| `programmes` | `id`, `institution_id`, `department_id`, `code`, `name`, `level`, `duration_years` | `unique (institution_id, code)` |
-| `courses` | `id`, `institution_id`, `department_id`, `programme_id`, `code`, `title`, `units`, `level`, `required_room_type`, `required_features text[]` | `unique (institution_id, code)`; `units` CHECK 1–12 |
+| `campuses` | `id`, `institution_id`, `name`, `code`, `address`, `archived_at` | `unique (institution_id, code)`; `unique (institution_id, id)` so children can use a composite tenant FK |
+| `faculties` | `id`, `institution_id`, `campus_id`, `name`, `code`, `archived_at` | `unique (institution_id, code)`; `campus_id` **optional** (OQ-016); composite FK `(institution_id, campus_id)` → `campuses` |
+| `departments` | `id`, `institution_id`, `faculty_id`, `name`, `code`, `archived_at` | `unique (institution_id, code)`; composite FK to the faculty, so a department cannot point at another tenant's faculty |
+| `academic_sessions` | `id`, `institution_id`, `name`, `starts_on`, `ends_on`, `status`, `archived_at` | `unique (institution_id, name)`; CHECK `ends_on > starts_on`; `status` uses `academic_period_status` |
+| `semesters` | `id`, `institution_id`, `session_id`, `name`, `sequence`, `teaching_starts_on`, `teaching_ends_on`, `exam_starts_on`, `exam_ends_on`, `status`, `archived_at` | `unique (session_id, sequence)`; CHECK teaching → exam date ordering; composite FK to the session |
+| `programmes` | `id`, `institution_id`, `department_id`, `code`, `name`, `level`, `duration_years`, `archived_at` | `unique (institution_id, code)`; `level` in undergraduate/postgraduate/diploma/certificate; `duration_years` 1–8 |
+| `courses` | `id`, `institution_id`, `department_id`, `code`, `title`, `units`, `level`, `required_room_type`, `required_features text[]`, `archived_at` | `unique (institution_id, code)`; `units` 1–12; `level` 100–900 in steps of 100 |
+| `programme_courses` | `id`, `institution_id`, `programme_id`, `course_id`, `level`, `requirement`, `archived_at` | `unique (programme_id, course_id)`; `requirement` required/elective (OQ-017, replacing the single `courses.programme_id`) |
 | `student_groups` | `id`, `institution_id`, `department_id`, `programme_id`, `level`, `name`, `expected_size` | `unique (institution_id, name)` |
 | `students` | `id`, `institution_id`, `user_id`, `matric_number`, `programme_id`, `level`, `status` | `unique (institution_id, matric_number)`; `user_id` unique per institution |
 | `student_group_members` | `group_id`, `student_id`, `institution_id` | PK `(group_id, student_id)`; trigger enforces same institution |
@@ -271,6 +274,7 @@ $$;
 
 - **Read:** `institution_id in (select * from auth_institution_ids())`, narrowed further by role/scope where required (e.g. `department_admin` limited to `auth_department_ids(institution_id)`).
 - **Write:** capability check, e.g. `auth_role(institution_id) in ('institution_admin','faculty_admin','department_admin')`, plus scope restriction for faculty/department admins.
+- **Academic structure:** reads are `institution_id in (select public.auth_institution_ids())`; writes call `public.can_manage_academic_unit(institution_id, faculty_id, department_id)`, which allows institution admins anywhere in the institution, faculty admins inside `auth_faculty_ids()`, and department admins inside `auth_department_ids()`. No academic table has a DELETE policy or a DELETE grant for `authenticated` — archiving is the only removal (OQ-018).
 - **Student/lecturer self-service:** policies join to `students.user_id` / `lecturers.user_id` and only expose published versions.
 - **Append-only tables** (`audit_logs`, `ai_credit_ledger`): no UPDATE or DELETE policies; writes happen through `SECURITY DEFINER` functions with explicit authorisation.
 - **Platform tables** (plans): read for authenticated users, write only for `is_platform_admin()`.
@@ -279,6 +283,8 @@ $$;
 ### 7.3 Testing isolation
 
 Fixtures create two institutions with independent admins. Tests assert: direct table reads return only own rows; cross-tenant IDs produce empty results or constraint/403 errors; service functions reject foreign institution IDs; storage signed URLs cannot be requested across tenants.
+
+Phase 4 adds `supabase/tests/academic_structure.sql`: a faculty administrator is refused a department in another faculty, a department administrator a course in another department, an inspector tenant cannot insert or update another tenant's records, a composite FK rejects a campus from another institution, one course is required by two programmes through `programme_courses`, archiving is recorded and restorable, and `authenticated` holds no DELETE privilege.
 
 Phase 3 extends this with `supabase/tests/institution_management.sql`: invitation tokens are unreadable as table rows, `create_invitation` refuses cross-tenant and lecturer callers, acceptance requires the invited email, tokens are single-use, and activity rows never leak across tenants. The institution status/slug guard is a column-level trigger because RLS cannot restrict individual columns.
 
@@ -307,3 +313,4 @@ Phase 3 extends this with `supabase/tests/institution_management.sql`: invitatio
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-23 | Database Architecture | Initial schema, ERD, constraints and RLS model |
 | 1.1 | 2026-11-25 | Engineering | Added Phase 3 invitation, activity and profile-email tables to the ERD, catalogue and isolation notes |
+| 1.2 | 2026-11-25 | Engineering | Phase 4 academic structure: optional campus on faculties, composite tenant FKs, `programme_courses` replacing `courses.programme_id`, archive-only removal and the academic scope helper |

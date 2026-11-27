@@ -1,6 +1,6 @@
 # Acadence — Screen Inventory
 
-> **Document ID:** UX-SCR-001 · **Version:** 1.1 · **Status:** Phases 1–3 implemented; remainder planned · **Date:** 2026-11-25 · **Owner:** Design
+> **Document ID:** UX-SCR-001 · **Version:** 1.2 · **Status:** Phases 1–4 implemented; remainder planned · **Date:** 2026-11-25 · **Owner:** Design
 > **Related:** [Design System](DESIGN_SYSTEM.md) · [PRD](../03-requirements/PRD.md) · [Roadmap](../10-implementation/IMPLEMENTATION_ROADMAP.md)
 
 ## 1. Route map
@@ -22,11 +22,17 @@
 | `/institution` | Institution overview | Institution admin | 3 | **Implemented** (sample metrics until Phase 15) |
 | `/institution/settings` | Profile, branding, academic defaults | Institution admin | 3 | **Implemented** |
 | `/institution/members` | Members, invitations, roles | Institution admin | 3 | **Implemented** |
-| `/institution/campuses` | Campuses, buildings | Institution admin | 4–5 | Planned (deferred to the academic hierarchy) |
-| `/institution/academics` | Sessions, semesters, programmes, courses | Academic admin | 4 | Planned |
-| `/institution/academics/offerings` | Course offerings and lecturer assignment | Dept admin | 4 | Planned |
-| `/institution/academics/students` | Students, groups, imports | Academic admin | 4 | Planned |
-| `/institution/academics/lecturers` | Lecturers and limits | Academic admin | 4 | Planned |
+| `/institution/academics` | Academic overview: counts, hierarchy, recent changes | Academic admin | 4 | **Implemented** |
+| `/institution/academics/campuses` | Campuses (optional sites) | Academic admin | 4 | **Implemented** |
+| `/institution/academics/faculties` | Faculties | Academic admin | 4 | **Implemented** |
+| `/institution/academics/departments` | Departments | Academic admin | 4 | **Implemented** |
+| `/institution/academics/sessions` | Academic sessions and semesters | Academic admin | 4 | **Implemented** |
+| `/institution/academics/programmes` | Programmes | Academic admin | 4 | **Implemented** |
+| `/institution/academics/courses` | Courses and programme curriculum | Academic admin | 4 | **Implemented** |
+| `/institution/academics/offerings` | Course offerings and lecturer assignment | Dept admin | 4b | Planned |
+| `/institution/academics/students` | Students, groups, imports | Academic admin | 4b | Planned |
+| `/institution/academics/lecturers` | Lecturers and limits | Academic admin | 4b | Planned |
+| `/institution/academics/calendar` | Academic calendar events | Academic admin | 4b | Planned |
 | `/institution/rooms` | Rooms, availability, bookings, utilisation | Academic admin | 5 | Planned |
 | `/faculty` | Faculty dashboard | Faculty admin | 15 | Planned |
 | `/faculty/timetables` | Faculty timetables and approvals | Faculty admin | 6 | Planned |
@@ -66,3 +72,4 @@ Every screen must include:
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-23 | Design | Initial inventory |
 | 1.1 | 2026-11-25 | Design | Marked Phase 2 and Phase 3 routes implemented; campuses deferred |
+| 1.2 | 2026-11-25 | Design | Added the Phase 4 academic screens; students, offerings, lecturers and calendar moved to Phase 4b |

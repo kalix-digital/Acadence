@@ -1,6 +1,6 @@
 # Acadence — API Specification
 
-> **Document ID:** API-001 · **Version:** 1.0 · **Status:** Approved conventions · **Date:** 2026-11-23 · **Owner:** Engineering
+> **Document ID:** API-001 · **Version:** 1.2 · **Status:** Approved conventions · **Date:** 2026-11-25 · **Owner:** Engineering
 > **Related:** [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [Database](../05-database/DATABASE_DESIGN.md) · [SRS](../03-requirements/SRS.md)
 
 ## 1. Surfaces
@@ -12,6 +12,8 @@
 | Route Handlers `/api/v1/*` | Integrations, webhooks, downloads, mobile clients later | JSON envelope, explicit status codes |
 
 Business logic lives in services; all three surfaces call the same services. There is no second implementation of a rule for the API.
+
+Phase 4 academic structure is served by Server Components (reads) and Server Actions (writes) only. No `/api/v1` endpoint is exposed for campuses, faculties, departments, sessions, semesters, programmes, courses or curricula yet; integrations will be added to the versioned API when Phase 15+ requires them, and they will reuse the same RLS-scoped queries and `can_manage_academic_unit` rule described in [AUTH_AND_MEMBERSHIPS §4.3](../05-database/AUTH_AND_MEMBERSHIPS.md).
 
 ## 2. Conventions
 
@@ -220,3 +222,4 @@ Rate limiting is server-side and returns `429` with `Retry-After`; the UI disabl
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-23 | Engineering | Initial surface conventions and endpoint catalogue |
 | 1.1 | 2026-11-25 | Engineering | Documented the Phase 3 invitation RPC contract and Server Action delivery |
+| 1.2 | 2026-11-25 | Engineering | Recorded that Phase 4 academic structure is Server-Component/Action only, with no `/api/v1` endpoints yet |

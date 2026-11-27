@@ -60,3 +60,6 @@ echo "running tenant isolation tests"
 
 echo "running institution management tests"
 "${PSQL[@]}" -d "$DB" -f supabase/tests/institution_management.sql
+
+echo "running academic structure tests"
+"${PSQL[@]}" -d "$DB" -f supabase/tests/academic_structure.sql

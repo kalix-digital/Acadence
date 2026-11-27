@@ -1,6 +1,6 @@
 # Acadence — Authentication, Memberships and RLS
 
-> **Document ID:** DBD-002 · **Version:** 1.2 · **Status:** Implemented and tested (Phases 2–3) · **Date:** 2026-11-25 · **Owner:** Engineering
+> **Document ID:** DBD-002 · **Version:** 1.3 · **Status:** Implemented and tested (Phases 2–4) · **Date:** 2026-11-25 · **Owner:** Engineering
 > **Related:** [Database Design](DATABASE_DESIGN.md) · [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [ADR-003](../13-adr/ADR-003-rls-multi-tenancy.md) · [Roadmap](../10-implementation/IMPLEMENTATION_ROADMAP.md)
 
 This document describes how Phase 2 implements authentication, institution memberships and the tenant isolation boundary. It is the reference for every later module: no table is added without RLS and a tenant helper.
@@ -111,6 +111,21 @@ RLS on `institution_invitations` allows select/insert/update/delete only to plat
 
 Email delivery uses Resend when `RESEND_API_KEY` is configured (`EMAIL_FROM` overrides the sender). Without a key the invitation is still created and the one-time link is returned to the inviter — the fallback is explicit in the UI, never a silent failure.
 
+### 4.3 Academic scopes (Phase 4)
+
+Academic records repeat the tenant rule and add one level of role scope. Reads are open to every active member of the institution; writes go through `public.can_manage_academic_unit(p_institution, p_faculty, p_department)`:
+
+| Role | May write |
+| --- | --- |
+| `institution_admin` | Any record in their institution, including campuses and sessions |
+| `faculty_admin` | Their own faculty, and departments/programmes/courses whose faculty is theirs |
+| `department_admin` | Their own department, and programmes/courses in it |
+| everyone else | Nothing (read-only) |
+
+The helper is `SECURITY DEFINER` and resolves the caller's role with `auth_role()`, so no policy reads a table it protects. Hierarchy consistency is enforced separately by composite `(institution_id, id)` foreign keys on every parent reference — a policy cannot be relied on to stop a foreign key from pointing at another tenant, and the constraint does it unconditionally, including for `service_role`.
+
+DELETE is deliberately absent: no academic table has a DELETE policy, and `authenticated` is granted only `select, insert, update`. Archiving sets `archived_at`; restoring clears it. `public.log_academic_event()` records `academic.<entity>.created|updated|archived|restored` in `institution_activity` for every change, attributed to `auth.uid()`.
+
 ## 5. Application session flow
 
 1. `src/proxy.ts` (Next.js 16 proxy convention, formerly middleware) calls `updateSession`, which asks Supabase Auth to revalidate the cookie and returns the user.
@@ -160,7 +175,9 @@ The suite covers: tenant read isolation both ways, cross-tenant update/delete at
 
 `supabase/tests/institution_management.sql` adds Phase 3 coverage: platform provisioning, institution status/slug guard rejection for institution admins, invitation authorisation (own tenant vs. cross-tenant vs. lecturer), duplicate and existing-member rejection, platform-role invitation rejection, token preview by `anon`, rejection for the wrong account, successful acceptance and membership activation, single-use enforcement, revocation and re-invitation, per-tenant activity visibility, and `anon` denial. `test.expect_error(sql, sqlstate, message)` runs as the caller so RLS and column guards still apply.
 
-Verified on PostgreSQL 16.15: all three migrations apply with `ON_ERROR_STOP=1`, and both suites pass (`npm run db:test`).
+`supabase/tests/academic_structure.sql` adds Phase 4 coverage: institution, faculty and department administrator scope; cross-tenant inserts refused and cross-tenant updates filtered to zero rows; a composite FK rejecting a campus from another institution; duplicate codes; session and semester date rules; a shared course linked to two programmes; archive and restore recorded in the activity trail; the missing DELETE privilege; platform cross-tenant visibility; and `anon` denial.
+
+Verified on PostgreSQL 16.15: all four migrations apply with `ON_ERROR_STOP=1`, and all three suites pass (`npm run db:test`).
 
 ## 7. Known gaps
 
@@ -177,3 +194,4 @@ Verified on PostgreSQL 16.15: all three migrations apply with `ON_ERROR_STOP=1`,
 | 1.0 | 2026-11-24 | Engineering | Phase 2 authentication, membership and RLS implementation |
 | 1.1 | 2026-11-24 | Engineering | Removed membership policy recursion via `accept_invitation`; added isolation tests and disposable-Postgres verification |
 | 1.2 | 2026-11-25 | Engineering | Added Phase 3 invitation tokens, activity trail, status guard and their isolation suite |
+| 1.3 | 2026-11-25 | Engineering | Added Phase 4 academic write scopes, composite tenant keys, archive-only removal and the academic suite |

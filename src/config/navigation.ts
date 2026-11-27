@@ -66,10 +66,9 @@ export const navigation: NavSection[] = [
     items: [
       {
         label: "Academic Administration",
-        href: "#",
+        href: "/institution/academics",
         icon: Library,
         capability: "manage_academics",
-        phase: 4,
       },
       {
         label: "Timetable Management",
@@ -201,7 +200,7 @@ export const iconRailItems: NavItem[] = [
   {
     label: "Academic administration",
     icon: Library,
-    href: "#",
+    href: "/institution/academics",
     capability: "manage_academics",
   },
   {
