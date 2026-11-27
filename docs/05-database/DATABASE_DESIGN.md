@@ -1,6 +1,6 @@
 # Acadence — Database Design
 
-> **Document ID:** DBD-001 · **Version:** 1.2 · **Status:** Approved for migration authoring · **Date:** 2026-11-25 · **Owner:** Database Architecture
+> **Document ID:** DBD-001 · **Version:** 1.3 · **Status:** Approved for migration authoring · **Date:** 2026-11-27 · **Owner:** Database Architecture
 > **Related:** [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [SRS](../03-requirements/SRS.md) · [API](../06-api/API_SPECIFICATION.md) · [ADR-003](../13-adr/ADR-003-rls-multi-tenancy.md)
 
 ## 1. Principles
@@ -112,12 +112,13 @@ erDiagram
 | `programmes` | `id`, `institution_id`, `department_id`, `code`, `name`, `level`, `duration_years`, `archived_at` | `unique (institution_id, code)`; `level` in undergraduate/postgraduate/diploma/certificate; `duration_years` 1–8 |
 | `courses` | `id`, `institution_id`, `department_id`, `code`, `title`, `units`, `level`, `required_room_type`, `required_features text[]`, `archived_at` | `unique (institution_id, code)`; `units` 1–12; `level` 100–900 in steps of 100 |
 | `programme_courses` | `id`, `institution_id`, `programme_id`, `course_id`, `level`, `requirement`, `archived_at` | `unique (programme_id, course_id)`; `requirement` required/elective (OQ-017, replacing the single `courses.programme_id`) |
-| `student_groups` | `id`, `institution_id`, `department_id`, `programme_id`, `level`, `name`, `expected_size` | `unique (institution_id, name)` |
-| `students` | `id`, `institution_id`, `user_id`, `matric_number`, `programme_id`, `level`, `status` | `unique (institution_id, matric_number)`; `user_id` unique per institution |
-| `student_group_members` | `group_id`, `student_id`, `institution_id` | PK `(group_id, student_id)`; trigger enforces same institution |
-| `lecturers` | `id`, `institution_id`, `user_id`, `staff_number`, `department_id`, `max_contact_hours`, `status` | `unique (institution_id, staff_number)` |
-| `course_offerings` | `id`, `institution_id`, `semester_id`, `course_id`, `group_id`, `expected_size`, `sessions_per_week`, `session_minutes`, `required_room_type` | `unique (semester_id, course_id, group_id)`; `sessions_per_week` CHECK 1–5 |
-| `offering_lecturers` | `offering_id`, `lecturer_id`, `institution_id`, `contact_hours`, `is_primary` | PK `(offering_id, lecturer_id)`; `contact_hours >= 0` |
+| `students` | `id`, `institution_id`, `user_id` (nullable), `matric_number`, `first_name`, `last_name`, `email`, `phone`, `programme_id`, `level`, `entry_session_id`, `status`, `archived_at` | `unique (institution_id, matric_number)`; partial unique `(institution_id, lower(email))`; `unique (institution_id, user_id)` so one account links to one record (OQ-020, OQ-021) |
+| `lecturers` | `id`, `institution_id`, `user_id` (nullable), `staff_number`, `title`, `first_name`, `last_name`, `email`, `phone`, `department_id`, `status`, `archived_at` | `unique (institution_id, staff_number)`; partial unique `(institution_id, lower(email))`; composite FK to the department |
+| `student_groups` | `id`, `institution_id`, `programme_id`, `session_id`, `level`, `name`, `code`, `expected_size`, `archived_at` | Cohort definition (OQ-022); `unique (institution_id, code)`; composite FKs to programme and session |
+| `student_group_members` | `id`, `institution_id`, `group_id`, `student_id`, `archived_at` | Many-to-many membership; partial unique `(group_id, student_id) WHERE archived_at IS NULL` allows archive and restore |
+| `course_offerings` | `id`, `institution_id`, `course_id`, `session_id`, `semester_id`, `coordinator_lecturer_id`, `expected_size`, `status`, `notes`, `archived_at` | `unique (semester_id, course_id)`; composite FK `(institution_id, semester_id, session_id)` → `semesters` pins the semester to its session (OQ-023) |
+| `course_offering_lecturers` | `id`, `institution_id`, `offering_id`, `lecturer_id`, `role` (`lead`/`assistant`), `contact_hours`, `archived_at` | Partial unique `(offering_id, lecturer_id) WHERE archived_at IS NULL` |
+| `course_offering_groups` | `id`, `institution_id`, `offering_id`, `group_id`, `archived_at` | Partial unique `(offering_id, group_id) WHERE archived_at IS NULL` |
 
 ### 4.3 Facilities
 
@@ -142,7 +143,7 @@ erDiagram
 | Table | Key columns | Constraints |
 | --- | --- | --- |
 | `lecturer_workloads` | `id`, `institution_id`, `semester_id`, `lecturer_id`, `contact_hours`, `non_teaching_hours`, `limit_hours`, `status`, `approved_by` | `unique (semester_id, lecturer_id)`; hours `>= 0` |
-| `calendar_events` | `id`, `institution_id`, `semester_id`, `title`, `kind`, `starts_on`, `ends_on`, `all_day`, `created_by` | CHECK `ends_on >= starts_on` |
+| `calendar_events` | `id`, `institution_id`, `session_id`, `semester_id` (nullable), `title`, `description`, `kind`, `starts_on`, `ends_on`, `archived_at` | CHECK `ends_on >= starts_on`; composite FK `(institution_id, semester_id, session_id)` keeps an event inside its session; teaching weeks are derived, not stored (OQ-024) |
 | `attendance_sessions` | `id`, `institution_id`, `offering_id`, `session_date`, `starts_at`, `ends_at`, `room_id`, `created_by` | `unique (offering_id, session_date, starts_at)` |
 | `attendance_records` | `id`, `institution_id`, `attendance_session_id`, `student_id`, `status`, `recorded_by`, `recorded_at`, `note` | `unique (attendance_session_id, student_id)` |
 
@@ -275,6 +276,7 @@ $$;
 - **Read:** `institution_id in (select * from auth_institution_ids())`, narrowed further by role/scope where required (e.g. `department_admin` limited to `auth_department_ids(institution_id)`).
 - **Write:** capability check, e.g. `auth_role(institution_id) in ('institution_admin','faculty_admin','department_admin')`, plus scope restriction for faculty/department admins.
 - **Academic structure:** reads are `institution_id in (select public.auth_institution_ids())`; writes call `public.can_manage_academic_unit(institution_id, faculty_id, department_id)`, which allows institution admins anywhere in the institution, faculty admins inside `auth_faculty_ids()`, and department admins inside `auth_department_ids()`. No academic table has a DELETE policy or a DELETE grant for `authenticated` — archiving is the only removal (OQ-018).
+- **People, groups, offerings and calendar:** policies resolve the owning unit first — `programme_department(programme_id)` for students and groups, `student_group_programme(group_id)` for memberships, `department_id` for lecturers, and `course_department(course_id)` / `offering_course(offering_id)` for offerings and their assignments. Calendar events are institution-level. Every helper is a definer function, so no policy reads the table it protects.
 - **Student/lecturer self-service:** policies join to `students.user_id` / `lecturers.user_id` and only expose published versions.
 - **Append-only tables** (`audit_logs`, `ai_credit_ledger`): no UPDATE or DELETE policies; writes happen through `SECURITY DEFINER` functions with explicit authorisation.
 - **Platform tables** (plans): read for authenticated users, write only for `is_platform_admin()`.

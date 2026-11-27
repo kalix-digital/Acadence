@@ -9,6 +9,11 @@ const SECTIONS: { entity: AcademicEntity; label: string }[] = [
   { entity: "session", label: "Sessions & semesters" },
   { entity: "programme", label: "Programmes" },
   { entity: "course", label: "Courses & curriculum" },
+  { entity: "student", label: "Students" },
+  { entity: "lecturer", label: "Lecturers" },
+  { entity: "group", label: "Groups" },
+  { entity: "offering", label: "Offerings" },
+  { entity: "calendarEvent", label: "Calendar" },
 ];
 
 export function AcademicsBackLink() {

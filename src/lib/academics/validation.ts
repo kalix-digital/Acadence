@@ -1,15 +1,24 @@
 import {
+  ASSIGNMENT_ROLES,
+  CALENDAR_EVENT_KINDS,
   CURRICULUM_REQUIREMENTS,
+  LECTURER_STATUSES,
   LEVEL_OPTIONS,
+  OFFERING_STATUSES,
   PERIOD_STATUSES,
   PROGRAMME_LEVELS,
   ROOM_TYPES,
+  STUDENT_STATUSES,
 } from "@/lib/academics/constants";
 import type {
   AcademicPeriodStatus,
+  CalendarEventKind,
   CurriculumRequirement,
+  LecturerStatus,
+  OfferingStatus,
   ProgrammeLevel,
   RoomType,
+  StudentStatus,
 } from "@/types/database";
 
 export type FieldErrors = Record<string, string>;
@@ -358,6 +367,350 @@ export function parseCourse(formData: FormData): Validated<CourseInput> {
 
 // ---------------------------------------------------------------------------
 // Curriculum links
+// ---------------------------------------------------------------------------
+export type StudentInput = {
+  matricNumber: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  programmeId: string;
+  level: number;
+  entrySessionId: string | null;
+  status: StudentStatus;
+};
+
+const IDENTIFIER_PATTERN = /^[A-Za-z0-9][A-Za-z0-9/._-]{1,29}$/;
+const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+function identifier(formData: FormData, field: string, errors: FieldErrors, label: string) {
+  const value = text(formData, field).toUpperCase();
+  if (!IDENTIFIER_PATTERN.test(value)) {
+    errors[field] = `Enter a valid ${label} (2–30 letters, numbers, dots, slashes or hyphens).`;
+  }
+  return value;
+}
+
+function optionalEmail(formData: FormData, field: string, errors: FieldErrors) {
+  const value = text(formData, field).toLowerCase();
+  if (value && !EMAIL_PATTERN.test(value)) {
+    errors[field] = "Enter a valid email address.";
+  }
+  return value || null;
+}
+
+function optionalPhone(formData: FormData, field: string, errors: FieldErrors) {
+  const value = text(formData, field);
+  if (value.length > 32) errors[field] = "Keep the phone number under 32 characters.";
+  return value || null;
+}
+
+function enumValue<T extends string>(
+  value: string,
+  allowed: readonly T[],
+  fallback: T,
+  errors: FieldErrors,
+  field: string,
+) {
+  if (!value) return fallback;
+  if (!(allowed as readonly string[]).includes(value)) {
+    errors[field] = "Choose a valid option.";
+    return fallback;
+  }
+  return value as T;
+}
+
+function optionalSize(formData: FormData, field: string, errors: FieldErrors) {
+  const raw = text(formData, field);
+  if (!raw) return null;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 1 || value > 2000) {
+    errors[field] = "Enter a size between 1 and 2000, or leave it blank.";
+    return null;
+  }
+  return value;
+}
+
+// ---------------------------------------------------------------------------
+// Students
+// ---------------------------------------------------------------------------
+export function parseStudent(formData: FormData): Validated<StudentInput> {
+  const errors: FieldErrors = {};
+  const programmeId =
+    requiredUuid(text(formData, "programmeId"), errors, "programmeId", "Choose the programme.") ??
+    "";
+
+  return result(
+    {
+      matricNumber: identifier(formData, "matricNumber", errors, "matriculation number"),
+      firstName: name(formData, "firstName", errors, 1, 80),
+      lastName: name(formData, "lastName", errors, 1, 80),
+      email: optionalEmail(formData, "email", errors),
+      phone: optionalPhone(formData, "phone", errors),
+      programmeId,
+      level: levelOption(text(formData, "level"), errors),
+      entrySessionId: optionalUuid(text(formData, "entrySessionId"), errors, "entrySessionId"),
+      status: enumValue(
+        text(formData, "status"),
+        STUDENT_STATUSES,
+        "active" as StudentStatus,
+        errors,
+        "status",
+      ),
+    },
+    errors,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Lecturers
+// ---------------------------------------------------------------------------
+export type LecturerInput = {
+  staffNumber: string;
+  title: string | null;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  departmentId: string;
+  status: LecturerStatus;
+};
+
+export function parseLecturer(formData: FormData): Validated<LecturerInput> {
+  const errors: FieldErrors = {};
+  const departmentId =
+    requiredUuid(
+      text(formData, "departmentId"),
+      errors,
+      "departmentId",
+      "Choose the department.",
+    ) ?? "";
+  const title = text(formData, "title");
+  if (title.length > 40) errors.title = "Keep the title under 40 characters.";
+
+  return result(
+    {
+      staffNumber: identifier(formData, "staffNumber", errors, "staff number"),
+      title: title || null,
+      firstName: name(formData, "firstName", errors, 1, 80),
+      lastName: name(formData, "lastName", errors, 1, 80),
+      email: optionalEmail(formData, "email", errors),
+      phone: optionalPhone(formData, "phone", errors),
+      departmentId,
+      status: enumValue(
+        text(formData, "status"),
+        LECTURER_STATUSES,
+        "active" as LecturerStatus,
+        errors,
+        "status",
+      ),
+    },
+    errors,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Student groups
+// ---------------------------------------------------------------------------
+export type StudentGroupInput = {
+  programmeId: string;
+  sessionId: string;
+  level: number;
+  name: string;
+  code: string;
+  expectedSize: number | null;
+};
+
+export function parseStudentGroup(formData: FormData): Validated<StudentGroupInput> {
+  const errors: FieldErrors = {};
+  const programmeId =
+    requiredUuid(text(formData, "programmeId"), errors, "programmeId", "Choose the programme.") ??
+    "";
+  const sessionId =
+    requiredUuid(text(formData, "sessionId"), errors, "sessionId", "Choose the session.") ?? "";
+
+  return result(
+    {
+      programmeId,
+      sessionId,
+      level: levelOption(text(formData, "level"), errors),
+      name: name(formData, "name", errors, 2, 80),
+      code: code(formData, "code", errors),
+      expectedSize: optionalSize(formData, "expectedSize", errors),
+    },
+    errors,
+  );
+}
+
+export type GroupMemberInput = { groupId: string; studentId: string };
+
+export function parseGroupMember(formData: FormData): Validated<GroupMemberInput> {
+  const errors: FieldErrors = {};
+  return result(
+    {
+      groupId: requiredUuid(text(formData, "groupId"), errors, "groupId", "Choose the group.") ?? "",
+      studentId:
+        requiredUuid(text(formData, "studentId"), errors, "studentId", "Choose the student.") ?? "",
+    },
+    errors,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Course offerings
+// ---------------------------------------------------------------------------
+export type OfferingInput = {
+  courseId: string;
+  sessionId: string;
+  semesterId: string;
+  coordinatorLecturerId: string | null;
+  expectedSize: number | null;
+  status: OfferingStatus;
+  notes: string | null;
+};
+
+export function parseOffering(formData: FormData): Validated<OfferingInput> {
+  const errors: FieldErrors = {};
+  const courseId =
+    requiredUuid(text(formData, "courseId"), errors, "courseId", "Choose the course.") ?? "";
+  const sessionId =
+    requiredUuid(text(formData, "sessionId"), errors, "sessionId", "Choose the session.") ?? "";
+  const semesterId =
+    requiredUuid(text(formData, "semesterId"), errors, "semesterId", "Choose the semester.") ??
+    "";
+  const notes = text(formData, "notes");
+  if (notes.length > 500) errors.notes = "Keep notes under 500 characters.";
+
+  return result(
+    {
+      courseId,
+      sessionId,
+      semesterId,
+      coordinatorLecturerId: optionalUuid(
+        text(formData, "coordinatorLecturerId"),
+        errors,
+        "coordinatorLecturerId",
+      ),
+      expectedSize: optionalSize(formData, "expectedSize", errors),
+      status: enumValue(
+        text(formData, "status"),
+        OFFERING_STATUSES,
+        "planned" as OfferingStatus,
+        errors,
+        "status",
+      ),
+      notes: notes || null,
+    },
+    errors,
+  );
+}
+
+export type OfferingLecturerInput = {
+  offeringId: string;
+  lecturerId: string;
+  role: "lead" | "assistant";
+  contactHours: number | null;
+};
+
+export function parseOfferingLecturer(formData: FormData): Validated<OfferingLecturerInput> {
+  const errors: FieldErrors = {};
+  const contactHoursRaw = text(formData, "contactHours");
+  let contactHours: number | null = null;
+
+  if (contactHoursRaw) {
+    contactHours = Number(contactHoursRaw);
+    if (!Number.isFinite(contactHours) || contactHours < 0 || contactHours > 200) {
+      errors.contactHours = "Enter contact hours between 0 and 200.";
+      contactHours = null;
+    }
+  }
+
+  return result(
+    {
+      offeringId:
+        requiredUuid(text(formData, "offeringId"), errors, "offeringId", "Choose the offering.") ??
+        "",
+      lecturerId:
+        requiredUuid(text(formData, "lecturerId"), errors, "lecturerId", "Choose the lecturer.") ??
+        "",
+      role: enumValue(
+        text(formData, "role"),
+        ASSIGNMENT_ROLES,
+        "lead" as const,
+        errors,
+        "role",
+      ),
+      contactHours,
+    },
+    errors,
+  );
+}
+
+export type OfferingGroupInput = { offeringId: string; groupId: string };
+
+export function parseOfferingGroup(formData: FormData): Validated<OfferingGroupInput> {
+  const errors: FieldErrors = {};
+  return result(
+    {
+      offeringId:
+        requiredUuid(text(formData, "offeringId"), errors, "offeringId", "Choose the offering.") ??
+        "",
+      groupId: requiredUuid(text(formData, "groupId"), errors, "groupId", "Choose the group.") ?? "",
+    },
+    errors,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Academic calendar
+// ---------------------------------------------------------------------------
+export type CalendarEventInput = {
+  sessionId: string;
+  semesterId: string | null;
+  title: string;
+  description: string | null;
+  kind: CalendarEventKind;
+  startsOn: string;
+  endsOn: string;
+};
+
+export function parseCalendarEvent(formData: FormData): Validated<CalendarEventInput> {
+  const errors: FieldErrors = {};
+  const sessionId =
+    requiredUuid(text(formData, "sessionId"), errors, "sessionId", "Choose the session.") ?? "";
+  const startsOn = text(formData, "startsOn");
+  const endsOn = text(formData, "endsOn");
+  const description = text(formData, "description");
+
+  if (!validDate(startsOn)) errors.startsOn = "Choose a valid start date.";
+  if (!validDate(endsOn)) errors.endsOn = "Choose a valid end date.";
+  if (validDate(startsOn) && validDate(endsOn) && endsOn < startsOn) {
+    errors.endsOn = "The event cannot end before it starts.";
+  }
+  if (description.length > 500) errors.description = "Keep the description under 500 characters.";
+
+  return result(
+    {
+      sessionId,
+      semesterId: optionalUuid(text(formData, "semesterId"), errors, "semesterId"),
+      title: name(formData, "title", errors, 2, 120),
+      description: description || null,
+      kind: enumValue(
+        text(formData, "kind"),
+        CALENDAR_EVENT_KINDS,
+        "event" as CalendarEventKind,
+        errors,
+        "kind",
+      ),
+      startsOn,
+      endsOn,
+    },
+    errors,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Curriculum links (continued)
 // ---------------------------------------------------------------------------
 export type CurriculumInput = {
   programmeId: string;

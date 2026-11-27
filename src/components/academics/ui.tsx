@@ -123,10 +123,13 @@ export function AcademicTable({
   entity,
   columns,
   rows,
+  editParam = "edit",
 }: {
   entity: AcademicEntity;
   columns: string[];
   rows: AcademicTableRow[];
+  /** Query parameter the edit link uses, so secondary lists do not edit the primary record. */
+  editParam?: string;
 }) {
   const basePath = ACADEMIC_ENTITIES[entity].path;
 
@@ -156,7 +159,7 @@ export function AcademicTable({
                   </Badge>
                 )}
                 <Button asChild size="xs" variant="ghost">
-                  <Link href={`${basePath}?edit=${row.id}`}>
+                  <Link href={`${basePath}?${editParam}=${row.id}`}>
                     <Pencil /> Edit
                   </Link>
                 </Button>

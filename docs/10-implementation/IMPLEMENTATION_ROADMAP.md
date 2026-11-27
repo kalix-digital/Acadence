@@ -1,6 +1,6 @@
 # Acadence — Technical Implementation Roadmap
 
-> **Document ID:** IMP-001 · **Version:** 1.3 · **Status:** Active · **Date:** 2026-11-25 · **Owner:** Engineering Lead
+> **Document ID:** IMP-001 · **Version:** 1.4 · **Status:** Active · **Date:** 2026-11-27 · **Owner:** Engineering Lead
 > **Related:** [SRS](../03-requirements/SRS.md) · [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [Testing](../09-testing/TESTING_STRATEGY.md) · [Screen Inventory](../07-ui-ux/SCREEN_INVENTORY.md)
 
 ## 1. Delivery rules
@@ -18,7 +18,8 @@
 | 1 | Project foundation | **Complete** (tests pending) | App builds, shell renders, tokens shared, env documented |
 | 2 | Authentication & authorisation | **Complete** (merged to `main`; hosted Supabase verification pending) | Sign-in/out/reset/verify work; RLS on all tables; role dashboards; isolation tests |
 | 3 | Institution management | **Complete** (awaiting approval; hosted verification pending) | Provision → configure → onboard; suspension; membership scopes |
-| 4 | Academic administration | **Complete** (awaiting approval; people/scheduling records and imports deferred to 4b) | Campuses, faculties, departments, sessions, semesters, programmes, courses, curricula |
+| 4 | Academic administration | **Complete** (awaiting approval) | Campuses, faculties, departments, sessions, semesters, programmes, courses, curricula |
+| 4b | People, groups, offerings & calendar | **Complete** (awaiting approval; hosted verification pending) | Students, lecturers, cohort groups, course offerings, academic calendar, CSV imports |
 | 5 | Classroom & facilities | Not started | Rooms, features, availability, bookings without overlap, utilisation |
 | 6 | Timetable management | Not started | Drafts, grid editing, publish, immutable versions, personal views, change requests |
 | 7 | Conflict detection | Not started | All conflict kinds, severity, explanations, publication block, concurrency safety |
@@ -161,6 +162,40 @@
 - `npm run lint` — pass, no warnings.
 - `npm run build` — pass; `/institution/academics` and its six sub-routes are dynamic.
 
+## 5.2 Phase 4b report (delivered)
+
+| Field | Value |
+| --- | --- |
+| Scope | Students, lecturers, student groups and membership, course offerings with lecturer assignments and linked groups, the academic calendar, and CSV imports. |
+| Migration | `20261126120000_people_offerings_calendar.sql` |
+| Tests | `supabase/tests/people_offerings_calendar.sql` |
+
+**Implemented**
+
+- **Records before accounts (OQ-020).** `students` and `lecturers` carry a nullable `user_id` that is unique per institution. A roster can be imported or entered before anyone is invited, and an account is linked later without changing the record's identity.
+- **Identifiers (OQ-021).** Matriculation and staff numbers are mandatory and unique across the institution; email is optional but unique case-insensitively when present. Both are checked in the database and reported per row during an import.
+- **Cohort groups (OQ-022).** `student_groups` is programme + level + session; `student_group_members` is many-to-many with a partial unique index, so a student can be in a cohort group and a lab group at once, and a membership can be archived and restored.
+- **Course offerings (OQ-023).** One offering per course per semester, with an optional coordinator, separate lecturer assignments (`lead`/`assistant`, optional contact hours) and linked student groups. A composite foreign key on `(institution_id, semester_id, session_id)` makes it impossible to place an offering in a semester from another session.
+- **Calendar (OQ-024).** Events belong to a session and may be narrowed to a semester. Teaching weeks are derived in `src/lib/academics/calendar.ts` from the semester's teaching window and holiday events; nothing is stored, so editing a holiday immediately changes the count.
+- **Imports (OQ-025).** `src/lib/academics/import.ts` reads RFC 4180 CSV (quoted fields, CRLF, BOM), accepts common header aliases, and validates every row against the same rules as the form plus existing identifiers and in-file duplicates. The panel validates first, then imports the whole batch in a single insert: one bad row imports nothing.
+- **Screens.** `/institution/academics/students`, `/lecturers`, `/groups`, `/offerings` and `/calendar`, each with create/edit, search, filters, pagination, archive/restore and an import panel where it applies. The overview counts and navigation now include all five.
+- **Database conventions.** The same composite tenant keys, definer scope helpers, archive-only removal and `institution_activity` logging as Phase 4. New resolvers: `student_group_programme`, `course_department`, `offering_course`.
+
+**Not yet implemented**
+
+- Excel (`.xlsx`) import; only CSV is read.
+- Partial import or per-row retry; a file must be clean before anything is written.
+- Linking an imported record to an account from the screen; the column exists and the invitation flow already accepts the role.
+- Lecturer workload limits (Phase 9) and the ICS calendar feed (Phase 10).
+- A search-based student picker for very large rosters; the group-membership form lists up to 500 students by surname.
+
+**Verification performed**
+
+- `npm run db:test` — five migrations apply with `ON_ERROR_STOP=1`; all four suites pass. Phase 4b coverage: records created without an account, one account per student, duplicate matric/staff/email rejection, malformed identifiers, department and faculty write scope, lecturer read-only access, many-to-many membership with duplicate rejection, cross-tenant membership and offering references, one offering per course per semester, semester/session mismatch, duplicate and unknown lecturer assignments, calendar date and session rules, archive/restore activity records, missing DELETE privilege, cross-tenant invisibility, and `anon` denial.
+- `npm run lint` — pass, no warnings.
+- `npm run build` — pass; the five new routes are dynamic and appear in the route table.
+- Not verified: no hosted Supabase project is attached, so no screen has been exercised signed in; CSV import has been unit-checked only through its validation paths, not against a live database.
+
 ## 6. Project structure
 
 ```
@@ -246,3 +281,4 @@ acadence/
 | 1.1 | 2026-11-24 | Engineering | Phase 2 authentication, memberships and RLS reported |
 | 1.2 | 2026-11-25 | Engineering | Phase 2 merged; Phase 3 institution management, invitations and members reported complete pending approval |
 | 1.3 | 2026-11-25 | Engineering | Phase 3 merged to `main`; Phase 4 academic structure reported complete pending approval, with people and scheduling records deferred to 4b |
+| 1.4 | 2026-11-27 | Engineering | Phase 4b students, lecturers, cohort groups, course offerings, academic calendar and CSV imports reported complete pending approval |

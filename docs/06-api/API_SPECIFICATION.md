@@ -1,6 +1,6 @@
 # Acadence — API Specification
 
-> **Document ID:** API-001 · **Version:** 1.2 · **Status:** Approved conventions · **Date:** 2026-11-25 · **Owner:** Engineering
+> **Document ID:** API-001 · **Version:** 1.3 · **Status:** Approved conventions · **Date:** 2026-11-27 · **Owner:** Engineering
 > **Related:** [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [Database](../05-database/DATABASE_DESIGN.md) · [SRS](../03-requirements/SRS.md)
 
 ## 1. Surfaces
@@ -103,7 +103,13 @@ Server Action mutation results follow §4; forms surface `fields` inline. Invita
 | `GET/POST` | `/api/v1/institutions/{id}/students` | academic admin | Students |
 | `GET/POST` | `/api/v1/institutions/{id}/lecturers` | academic admin | Lecturers |
 | `GET/POST` | `/api/v1/institutions/{id}/groups` | dept admin | Student groups |
+| `GET/POST` | `/api/v1/institutions/{id}/groups/{groupId}/members` | dept admin | Group membership (archive, never delete) |
+| `GET/POST` | `/api/v1/institutions/{id}/offerings/{offeringId}/lecturers` | dept admin | Lecturer assignments (lead/assistant, contact hours) |
+| `GET/POST` | `/api/v1/institutions/{id}/offerings/{offeringId}/groups` | dept admin | Student groups linked to an offering |
+| `GET/POST` | `/api/v1/institutions/{id}/calendar-events?sessionId=` | academic admin | Calendar events; teaching weeks are derived, not stored |
 | `POST` | `/api/v1/institutions/{id}/imports/{entity}` | academic admin | CSV import (preview then commit) |
+
+Phase 4b is implemented as Next.js Server Actions rather than REST routes, like the rest of the academic module: `saveAcademicRecordAction` covers every entity above, `archiveAcademicRecordAction` archives and restores, and `importRecordsAction` runs the two-pass CSV import. A file with any invalid row imports nothing; the action returns per-row errors for the dry run.
 
 ### 3.3 Facilities (Phase 5)
 

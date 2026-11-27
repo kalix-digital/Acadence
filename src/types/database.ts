@@ -236,6 +236,128 @@ export type ProgrammeCourseRow = {
   updated_at: string;
 };
 
+export type StudentStatus = "active" | "graduated" | "withdrawn" | "suspended";
+export type LecturerStatus = "active" | "on_leave" | "retired";
+export type OfferingStatus = "planned" | "open" | "closed";
+export type CalendarEventKind =
+  | "holiday"
+  | "registration"
+  | "teaching"
+  | "examination"
+  | "deadline"
+  | "event";
+
+export type StudentRow = {
+  id: string;
+  institution_id: string;
+  user_id: string | null;
+  matric_number: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  programme_id: string;
+  level: number;
+  entry_session_id: string | null;
+  status: StudentStatus;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LecturerRow = {
+  id: string;
+  institution_id: string;
+  user_id: string | null;
+  staff_number: string;
+  title: string | null;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  department_id: string;
+  status: LecturerStatus;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudentGroupRow = {
+  id: string;
+  institution_id: string;
+  programme_id: string;
+  session_id: string;
+  level: number;
+  name: string;
+  code: string;
+  expected_size: number | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudentGroupMemberRow = {
+  id: string;
+  institution_id: string;
+  group_id: string;
+  student_id: string;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CourseOfferingRow = {
+  id: string;
+  institution_id: string;
+  course_id: string;
+  session_id: string;
+  semester_id: string;
+  coordinator_lecturer_id: string | null;
+  expected_size: number | null;
+  status: OfferingStatus;
+  notes: string | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CourseOfferingLecturerRow = {
+  id: string;
+  institution_id: string;
+  offering_id: string;
+  lecturer_id: string;
+  role: "lead" | "assistant";
+  contact_hours: number | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CourseOfferingGroupRow = {
+  id: string;
+  institution_id: string;
+  offering_id: string;
+  group_id: string;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CalendarEventRow = {
+  id: string;
+  institution_id: string;
+  session_id: string;
+  semester_id: string | null;
+  title: string;
+  description: string | null;
+  kind: CalendarEventKind;
+  starts_on: string;
+  ends_on: string;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type Table<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
   Row: Row;
   Insert: Insert;
@@ -260,6 +382,14 @@ export type Database = {
       programmes: Table<ProgrammeRow>;
       courses: Table<CourseRow>;
       programme_courses: Table<ProgrammeCourseRow>;
+      students: Table<StudentRow>;
+      lecturers: Table<LecturerRow>;
+      student_groups: Table<StudentGroupRow>;
+      student_group_members: Table<StudentGroupMemberRow>;
+      course_offerings: Table<CourseOfferingRow>;
+      course_offering_lecturers: Table<CourseOfferingLecturerRow>;
+      course_offering_groups: Table<CourseOfferingGroupRow>;
+      calendar_events: Table<CalendarEventRow>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -304,12 +434,22 @@ export type Database = {
         Args: { p_programme: string };
         Returns: string | null;
       };
+      student_group_programme: {
+        Args: { p_group: string };
+        Returns: string | null;
+      };
+      course_department: { Args: { p_course: string }; Returns: string | null };
+      offering_course: { Args: { p_offering: string }; Returns: string | null };
     };
     Enums: {
       institution_status: InstitutionStatus;
       membership_role: MembershipRole;
       membership_status: MembershipStatus;
       academic_period_status: AcademicPeriodStatus;
+      student_status: StudentStatus;
+      lecturer_status: LecturerStatus;
+      offering_status: OfferingStatus;
+      calendar_event_kind: CalendarEventKind;
     };
     CompositeTypes: Record<string, never>;
   };

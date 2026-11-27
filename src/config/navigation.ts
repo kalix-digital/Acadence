@@ -12,7 +12,9 @@ import {
   ScrollText,
   Settings,
   Sparkles,
+  UserRound,
   Users,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import type { Capability } from "@/lib/auth/capabilities";
@@ -93,10 +95,9 @@ export const navigation: NavSection[] = [
       },
       {
         label: "Academic Calendar",
-        href: "#",
+        href: "/institution/academics/calendar",
         icon: CalendarDays,
-        capability: "view_institution_dashboard",
-        phase: 10,
+        capability: "manage_academics",
       },
       {
         label: "Attendance",
@@ -119,17 +120,27 @@ export const navigation: NavSection[] = [
       },
       {
         label: "Students",
-        href: "#",
+        href: "/institution/academics/students",
         icon: GraduationCap,
         capability: "manage_academics",
-        phase: 4,
       },
       {
         label: "Lecturers",
-        href: "#",
-        icon: Users,
-        capability: "manage_workload",
-        phase: 9,
+        href: "/institution/academics/lecturers",
+        icon: UserRound,
+        capability: "manage_academics",
+      },
+      {
+        label: "Student groups",
+        href: "/institution/academics/groups",
+        icon: UsersRound,
+        capability: "manage_academics",
+      },
+      {
+        label: "Course offerings",
+        href: "/institution/academics/offerings",
+        icon: ClipboardList,
+        capability: "manage_academics",
       },
     ],
   },

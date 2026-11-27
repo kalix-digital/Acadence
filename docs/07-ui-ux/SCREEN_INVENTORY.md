@@ -1,6 +1,6 @@
 # Acadence — Screen Inventory
 
-> **Document ID:** UX-SCR-001 · **Version:** 1.2 · **Status:** Phases 1–4 implemented; remainder planned · **Date:** 2026-11-25 · **Owner:** Design
+> **Document ID:** UX-SCR-001 · **Version:** 1.3 · **Status:** Phases 1–4b implemented; remainder planned · **Date:** 2026-11-27 · **Owner:** Design
 > **Related:** [Design System](DESIGN_SYSTEM.md) · [PRD](../03-requirements/PRD.md) · [Roadmap](../10-implementation/IMPLEMENTATION_ROADMAP.md)
 
 ## 1. Route map
@@ -29,10 +29,11 @@
 | `/institution/academics/sessions` | Academic sessions and semesters | Academic admin | 4 | **Implemented** |
 | `/institution/academics/programmes` | Programmes | Academic admin | 4 | **Implemented** |
 | `/institution/academics/courses` | Courses and programme curriculum | Academic admin | 4 | **Implemented** |
-| `/institution/academics/offerings` | Course offerings and lecturer assignment | Dept admin | 4b | Planned |
-| `/institution/academics/students` | Students, groups, imports | Academic admin | 4b | Planned |
-| `/institution/academics/lecturers` | Lecturers and limits | Academic admin | 4b | Planned |
-| `/institution/academics/calendar` | Academic calendar events | Academic admin | 4b | Planned |
+| `/institution/academics/offerings` | Course offerings, lecturer assignments, linked groups | Dept admin | 4b | **Implemented** |
+| `/institution/academics/students` | Student roster, filters, CSV import | Academic admin | 4b | **Implemented** |
+| `/institution/academics/lecturers` | Lecturer roster by department, CSV import | Academic admin | 4b | **Implemented** |
+| `/institution/academics/groups` | Cohort groups and many-to-many membership | Dept admin | 4b | **Implemented** |
+| `/institution/academics/calendar` | Calendar events and derived teaching weeks | Academic admin | 4b | **Implemented** |
 | `/institution/rooms` | Rooms, availability, bookings, utilisation | Academic admin | 5 | Planned |
 | `/faculty` | Faculty dashboard | Faculty admin | 15 | Planned |
 | `/faculty/timetables` | Faculty timetables and approvals | Faculty admin | 6 | Planned |

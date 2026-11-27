@@ -5,12 +5,16 @@ import {
   ArrowRight,
   BookOpen,
   Building2,
+  CalendarDays,
   CalendarRange,
+  ClipboardList,
   GraduationCap,
   Landmark,
   Layers,
   Network,
   ScrollText,
+  UserRound,
+  UsersRound,
 } from "lucide-react";
 import { AcademicFlash } from "@/components/academics/ui";
 import {
@@ -63,6 +67,31 @@ const SECTIONS: {
     icon: BookOpen,
     description: "Courses and the programme curriculum.",
   },
+  {
+    entity: "student",
+    icon: GraduationCap,
+    description: "The roster, before accounts exist. CSV import included.",
+  },
+  {
+    entity: "lecturer",
+    icon: UserRound,
+    description: "Teaching staff by department. CSV import included.",
+  },
+  {
+    entity: "group",
+    icon: UsersRound,
+    description: "Cohort groups with many-to-many membership.",
+  },
+  {
+    entity: "offering",
+    icon: ClipboardList,
+    description: "Course offerings, lecturers and linked groups.",
+  },
+  {
+    entity: "calendarEvent",
+    icon: CalendarDays,
+    description: "Events per session, with teaching weeks derived.",
+  },
 ];
 
 export default async function AcademicsOverviewPage({
@@ -108,13 +137,17 @@ export default async function AcademicsOverviewPage({
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Campuses", value: summary.campuses },
-          { label: "Faculties", value: summary.faculties },
-          { label: "Departments", value: summary.departments },
+          { label: "Students", value: summary.students },
+          { label: "Lecturers", value: summary.lecturers },
+          { label: "Student groups", value: summary.groups },
+          { label: "Offerings", value: summary.offerings },
+          { label: "Calendar events", value: summary.calendarEvents },
           { label: "Programmes", value: summary.programmes },
           { label: "Courses", value: summary.courses },
           { label: "Sessions", value: summary.sessions },
           { label: "Semesters", value: summary.semesters },
+          { label: "Campuses", value: summary.campuses },
+          { label: "Faculties", value: summary.faculties },
           { label: "Archived courses", value: summary.archivedCourses },
         ].map((stat) => (
           <div
@@ -137,7 +170,8 @@ export default async function AcademicsOverviewPage({
           <CardDescription>
             Each level constrains the one below it, and every record carries its
             institution. A faculty is optional on a campus; everything else has a
-            required parent.
+            required parent. People, groups and offerings hang off the programme,
+            department or course they belong to.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -149,6 +183,8 @@ export default async function AcademicsOverviewPage({
               "Department",
               "Programme / Course",
               "Curriculum link",
+              "Student / Lecturer / Group",
+              "Course offering",
             ].map((step, index) => (
               <li key={step} className="flex items-center gap-2">
                 {index > 0 && <ArrowRight className="size-3 opacity-50" />}

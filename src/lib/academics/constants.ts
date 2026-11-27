@@ -1,8 +1,12 @@
 import type {
   AcademicPeriodStatus,
+  CalendarEventKind,
   CurriculumRequirement,
+  LecturerStatus,
+  OfferingStatus,
   ProgrammeLevel,
   RoomType,
+  StudentStatus,
 } from "@/types/database";
 
 /** Academic entities the administration screen can create, edit and archive. */
@@ -14,7 +18,15 @@ export type AcademicEntity =
   | "semester"
   | "programme"
   | "course"
-  | "curriculum";
+  | "curriculum"
+  | "student"
+  | "lecturer"
+  | "group"
+  | "groupMember"
+  | "offering"
+  | "offeringLecturer"
+  | "offeringGroup"
+  | "calendarEvent";
 
 export type AcademicEntityConfig = {
   label: string;
@@ -29,7 +41,15 @@ export type AcademicEntityConfig = {
     | "semesters"
     | "programmes"
     | "courses"
-    | "programme_courses";
+    | "programme_courses"
+    | "students"
+    | "lecturers"
+    | "student_groups"
+    | "student_group_members"
+    | "course_offerings"
+    | "course_offering_lecturers"
+    | "course_offering_groups"
+    | "calendar_events";
   /** Capability needed to reach the screen. */
   capability: "manage_academics";
 };
@@ -91,6 +111,62 @@ export const ACADEMIC_ENTITIES: Record<AcademicEntity, AcademicEntityConfig> = {
     table: "programme_courses",
     capability: "manage_academics",
   },
+  student: {
+    label: "Students",
+    singular: "Student",
+    path: "/institution/academics/students",
+    table: "students",
+    capability: "manage_academics",
+  },
+  lecturer: {
+    label: "Lecturers",
+    singular: "Lecturer",
+    path: "/institution/academics/lecturers",
+    table: "lecturers",
+    capability: "manage_academics",
+  },
+  group: {
+    label: "Student groups",
+    singular: "Student group",
+    path: "/institution/academics/groups",
+    table: "student_groups",
+    capability: "manage_academics",
+  },
+  groupMember: {
+    label: "Group members",
+    singular: "Group member",
+    path: "/institution/academics/groups",
+    table: "student_group_members",
+    capability: "manage_academics",
+  },
+  offering: {
+    label: "Course offerings",
+    singular: "Course offering",
+    path: "/institution/academics/offerings",
+    table: "course_offerings",
+    capability: "manage_academics",
+  },
+  offeringLecturer: {
+    label: "Offering lecturers",
+    singular: "Lecturer assignment",
+    path: "/institution/academics/offerings",
+    table: "course_offering_lecturers",
+    capability: "manage_academics",
+  },
+  offeringGroup: {
+    label: "Offering groups",
+    singular: "Offering group",
+    path: "/institution/academics/offerings",
+    table: "course_offering_groups",
+    capability: "manage_academics",
+  },
+  calendarEvent: {
+    label: "Academic calendar",
+    singular: "Calendar event",
+    path: "/institution/academics/calendar",
+    table: "calendar_events",
+    capability: "manage_academics",
+  },
 };
 
 export function isAcademicEntity(value: string): value is AcademicEntity {
@@ -124,6 +200,63 @@ export const PERIOD_STATUSES: readonly AcademicPeriodStatus[] = [
   "active",
   "closed",
 ];
+
+export const STUDENT_STATUSES: readonly StudentStatus[] = [
+  "active",
+  "graduated",
+  "withdrawn",
+  "suspended",
+];
+
+export const LECTURER_STATUSES: readonly LecturerStatus[] = [
+  "active",
+  "on_leave",
+  "retired",
+];
+
+export const OFFERING_STATUSES: readonly OfferingStatus[] = [
+  "planned",
+  "open",
+  "closed",
+];
+
+export const CALENDAR_EVENT_KINDS: readonly CalendarEventKind[] = [
+  "holiday",
+  "registration",
+  "teaching",
+  "examination",
+  "deadline",
+  "event",
+];
+
+export const ASSIGNMENT_ROLES = ["lead", "assistant"] as const;
+export type AssignmentRole = (typeof ASSIGNMENT_ROLES)[number];
+
+/** CSV headers accepted by the import, in the order shown to the user. */
+export const STUDENT_IMPORT_COLUMNS = [
+  "matric_number",
+  "first_name",
+  "last_name",
+  "programme_code",
+  "level",
+  "email",
+  "phone",
+  "entry_session",
+  "status",
+] as const;
+
+export const LECTURER_IMPORT_COLUMNS = [
+  "staff_number",
+  "first_name",
+  "last_name",
+  "department_code",
+  "title",
+  "email",
+  "phone",
+  "status",
+] as const;
+
+export type ImportableEntity = "student" | "lecturer";
 
 /** Course and curriculum levels, in the order a student meets them. */
 export const LEVEL_OPTIONS: readonly number[] = [100, 200, 300, 400, 500, 600, 700, 800, 900];

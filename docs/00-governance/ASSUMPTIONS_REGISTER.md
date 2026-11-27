@@ -1,6 +1,6 @@
 # Acadence — Assumptions and Open Questions Register
 
-> **Document ID:** GOV-ASM-001 · **Version:** 1.2 · **Status:** Open (seven items closed) · **Date:** 2026-11-25 · **Owner:** Product
+> **Document ID:** GOV-ASM-001 · **Version:** 1.3 · **Status:** Open (thirteen items closed) · **Date:** 2026-11-27 · **Owner:** Product
 > **Related:** [Documentation Index](../README.md) · [PRD](../03-requirements/PRD.md) · [Roadmap](../10-implementation/IMPLEMENTATION_ROADMAP.md)
 
 This register lists every decision that cannot yet be made from available evidence. Nothing here is implemented as an assumption: the affected feature either stays configurable or waits for the decision.
@@ -37,6 +37,12 @@ This register lists every decision that cannot yet be made from available eviden
 | OQ-017 | Does a course belong to one programme, or can several programmes require it? | Curriculum model and duplicate courses | Phase 4 | **Closed** — `programme_courses` join table |
 | OQ-018 | May academic records ever be hard-deleted, or only archived? | Referential history, audit integrity | Phase 4 | **Closed** — archive only |
 | OQ-019 | Are students, lecturers, groups, offerings, calendar and imports part of this phase? | Delivery scope and dependency risk | Phase 4 | **Closed** — deferred to Phase 4b |
+| OQ-020 | Do student and lecturer records require an auth account before they exist? | Onboarding order, invitation flow, roster import | Phase 4b | **Closed** — record first, account later |
+| OQ-021 | Which identifiers are mandatory, and how unique are they? | Duplicate detection, imports, account linking | Phase 4b | **Closed** — institution-wide unique numbers, optional unique email |
+| OQ-022 | What is a student group, and how do students join one? | Timetable grouping, conflict detection | Phase 4b | **Closed** — cohort groups with many-to-many membership |
+| OQ-023 | What does a course offering contain in this phase? | Timetable and workload inputs | Phase 4b | **Closed** — offering + lecturer assignments + groups |
+| OQ-024 | How should calendar entries and teaching weeks be modelled? | Calendar UI, scheduling exclusions | Phase 4b | **Closed** — events per session, teaching weeks derived |
+| OQ-025 | What should the first import pass cover, and how should it handle bad rows? | Data quality, partial-import risk | Phase 4b | **Closed** — CSV for students and lecturers, dry run then all-or-nothing |
 
 ## How to close an item
 
@@ -57,6 +63,12 @@ This register lists every decision that cannot yet be made from available eviden
 | OQ-017 | A course belongs to a department and is linked to any number of programmes through `programme_courses` (level, required/elective). Shared courses such as GST 101 are never duplicated per programme. | 2026-11-25 | [DATABASE_DESIGN §4.2](../05-database/DATABASE_DESIGN.md) |
 | OQ-018 | Academic records are archived, never deleted. Every table has `archived_at`; `authenticated` holds no DELETE grant and no table has a DELETE policy, so archives are the only removal the application can perform. Archived records stay visible in an "Archived" view and can be restored. | 2026-11-25 | [Roadmap §5.1](../10-implementation/IMPLEMENTATION_ROADMAP.md) |
 | OQ-019 | Phase 4 delivers the academic structure only: campuses, faculties, departments, sessions, semesters, programmes, courses and curricula. Students, lecturers, student groups, course offerings, the academic calendar and CSV imports move to Phase 4b, after the hierarchy is proven in use. | 2026-11-25 | [Roadmap §5.1](../10-implementation/IMPLEMENTATION_ROADMAP.md) |
+| OQ-020 | Student and lecturer records exist before any account. `user_id` is nullable and unique per institution, so a roster is imported or entered first and linked to an account when the person accepts an invitation. | 2026-11-27 | [Database §4.2](../05-database/DATABASE_DESIGN.md) |
+| OQ-021 | Matriculation and staff numbers are mandatory and unique across the institution. An email address is optional, but when present it is unique per institution regardless of case. | 2026-11-27 | [Database §4.2](../05-database/DATABASE_DESIGN.md) |
+| OQ-022 | A student group is a cohort (programme + level + session). Membership is many-to-many and archived rather than deleted, so one student can sit in a cohort group and a lab or tutorial group at once. | 2026-11-27 | [Database §4.2](../05-database/DATABASE_DESIGN.md) |
+| OQ-023 | A course offering is course + session + semester + optional coordinator, with separate lecturer assignments (lead/assistant, contact hours) and linked student groups. One offering per course per semester. | 2026-11-27 | [Database §4.2](../05-database/DATABASE_DESIGN.md) |
+| OQ-024 | Calendar events belong to a session and may be narrowed to one of its semesters. Teaching weeks are derived from the semester's teaching window and the holiday events covering it; nothing is stored. | 2026-11-27 | [Roadmap §5.2](../10-implementation/IMPLEMENTATION_ROADMAP.md) |
+| OQ-025 | The first import pass covers students and lecturers in CSV. It validates every row first (dry run with per-row errors), then inserts the whole batch in one statement: one bad row imports nothing. Excel files are a later addition. | 2026-11-27 | [Roadmap §5.2](../10-implementation/IMPLEMENTATION_ROADMAP.md) |
 
 ## Revision history
 
@@ -65,3 +77,4 @@ This register lists every decision that cannot yet be made from available eviden
 | 1.0 | 2026-11-23 | Product | Initial register |
 | 1.1 | 2026-11-25 | Product | Closed OQ-003 (invitation-only), OQ-004 (`/institution` with switcher) and OQ-005 (no impersonation) for Phase 3 |
 | 1.2 | 2026-11-25 | Product | Closed OQ-016 (optional campus), OQ-017 (`programme_courses`), OQ-018 (archive only) and OQ-019 (Phase 4 scope) for Phase 4 |
+| 1.3 | 2026-11-27 | Product | Closed OQ-020 … OQ-025 (records before accounts, identifiers, cohort groups, offering contents, derived teaching weeks, CSV dry-run imports) for Phase 4b |
