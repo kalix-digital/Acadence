@@ -88,10 +88,9 @@ export const navigation: NavSection[] = [
       },
       {
         label: "Classrooms & Facilities",
-        href: "#",
+        href: "/institution/facilities",
         icon: Building2,
         capability: "manage_facilities",
-        phase: 5,
       },
       {
         label: "Academic Calendar",
@@ -223,7 +222,7 @@ export const iconRailItems: NavItem[] = [
   {
     label: "Facilities",
     icon: Building2,
-    href: "#",
+    href: "/institution/facilities",
     capability: "manage_facilities",
   },
   {

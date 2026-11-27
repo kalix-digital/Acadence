@@ -134,6 +134,8 @@ export type RoomType =
   | "studio"
   | "seminar";
 export type CurriculumRequirement = "required" | "elective";
+export type BookingStatus = "confirmed" | "cancelled";
+export type RoomFeatureCategory = "equipment" | "accessibility" | "layout" | "other";
 
 export type CampusRow = {
   id: string;
@@ -358,6 +360,87 @@ export type CalendarEventRow = {
   updated_at: string;
 };
 
+export type BuildingRow = {
+  id: string;
+  institution_id: string;
+  campus_id: string;
+  name: string;
+  code: string;
+  address: string | null;
+  notes: string | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RoomRow = {
+  id: string;
+  institution_id: string;
+  building_id: string;
+  name: string;
+  code: string;
+  room_type: RoomType;
+  capacity: number;
+  floor: string | null;
+  accessibility_notes: string | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RoomFeatureRow = {
+  id: string;
+  institution_id: string;
+  name: string;
+  category: RoomFeatureCategory;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RoomFeatureLinkRow = {
+  id: string;
+  institution_id: string;
+  room_id: string;
+  feature_id: string;
+  quantity: number | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RoomAvailabilityRow = {
+  id: string;
+  institution_id: string;
+  room_id: string;
+  semester_id: string;
+  day_of_week: number;
+  opens_at: string;
+  closes_at: string;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RoomBookingRow = {
+  id: string;
+  institution_id: string;
+  room_id: string;
+  semester_id: string;
+  department_id: string | null;
+  title: string;
+  purpose: string | null;
+  starts_at: string;
+  ends_at: string;
+  expected_attendees: number;
+  status: BookingStatus;
+  booked_by: string | null;
+  cancelled_at: string | null;
+  cancelled_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type Table<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
   Row: Row;
   Insert: Insert;
@@ -390,6 +473,12 @@ export type Database = {
       course_offering_lecturers: Table<CourseOfferingLecturerRow>;
       course_offering_groups: Table<CourseOfferingGroupRow>;
       calendar_events: Table<CalendarEventRow>;
+      buildings: Table<BuildingRow>;
+      rooms: Table<RoomRow>;
+      room_features: Table<RoomFeatureRow>;
+      room_feature_links: Table<RoomFeatureLinkRow>;
+      room_availability: Table<RoomAvailabilityRow>;
+      room_bookings: Table<RoomBookingRow>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -440,6 +529,11 @@ export type Database = {
       };
       course_department: { Args: { p_course: string }; Returns: string | null };
       offering_course: { Args: { p_offering: string }; Returns: string | null };
+      auth_can_manage_facilities: {
+        Args: { p_institution: string };
+        Returns: boolean;
+      };
+      room_capacity: { Args: { p_room: string }; Returns: number | null };
     };
     Enums: {
       institution_status: InstitutionStatus;
@@ -450,6 +544,8 @@ export type Database = {
       lecturer_status: LecturerStatus;
       offering_status: OfferingStatus;
       calendar_event_kind: CalendarEventKind;
+      room_type: RoomType;
+      booking_status: BookingStatus;
     };
     CompositeTypes: Record<string, never>;
   };

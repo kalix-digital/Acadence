@@ -1,6 +1,6 @@
 # Acadence — API Specification
 
-> **Document ID:** API-001 · **Version:** 1.3 · **Status:** Approved conventions · **Date:** 2026-11-27 · **Owner:** Engineering
+> **Document ID:** API-001 · **Version:** 1.4 · **Status:** Approved conventions · **Date:** 2026-11-27 · **Owner:** Engineering
 > **Related:** [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [Database](../05-database/DATABASE_DESIGN.md) · [SRS](../03-requirements/SRS.md)
 
 ## 1. Surfaces
@@ -121,6 +121,8 @@ Phase 4b is implemented as Next.js Server Actions rather than REST routes, like 
 | `GET/POST` | `/api/v1/institutions/{id}/rooms/{roomId}/bookings` | Ad-hoc bookings |
 | `GET` | `/api/v1/institutions/{id}/rooms/utilisation?semesterId=` | Utilisation report |
 
+Phase 5 is implemented as Next.js Server Actions, like Phases 3–4b: `saveFacilityRecordAction` covers buildings, rooms, features, room equipment, availability windows and bookings; `archiveFacilityRecordAction` archives and restores; `cancelBookingAction` cancels a booking and releases its slot. A refused booking returns the database's own reason (capacity, availability window, semester window or overlap) rather than a generic failure. Institution and faculty administrators manage facilities; department administrators may book only for their own department, which the RLS policies enforce.
+
 ### 3.4 Timetables and conflicts (Phases 6–7)
 
 | Method | Path | Capability | Purpose |
@@ -229,3 +231,5 @@ Rate limiting is server-side and returns `429` with `Retry-After`; the UI disabl
 | 1.0 | 2026-11-23 | Engineering | Initial surface conventions and endpoint catalogue |
 | 1.1 | 2026-11-25 | Engineering | Documented the Phase 3 invitation RPC contract and Server Action delivery |
 | 1.2 | 2026-11-25 | Engineering | Recorded that Phase 4 academic structure is Server-Component/Action only, with no `/api/v1` endpoints yet |
+| 1.3 | 2026-11-27 | Engineering | Recorded Phase 4b people, offering, calendar and CSV-import actions |
+| 1.4 | 2026-11-27 | Engineering | Recorded Phase 5 facilities actions, cancellation semantics and department booking scope |

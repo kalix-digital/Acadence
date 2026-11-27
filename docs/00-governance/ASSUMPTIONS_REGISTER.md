@@ -1,6 +1,6 @@
 # Acadence — Assumptions and Open Questions Register
 
-> **Document ID:** GOV-ASM-001 · **Version:** 1.3 · **Status:** Open (thirteen items closed) · **Date:** 2026-11-27 · **Owner:** Product
+> **Document ID:** GOV-ASM-001 · **Version:** 1.4 · **Status:** Open (twenty items closed) · **Date:** 2026-11-27 · **Owner:** Product
 > **Related:** [Documentation Index](../README.md) · [PRD](../03-requirements/PRD.md) · [Roadmap](../10-implementation/IMPLEMENTATION_ROADMAP.md)
 
 This register lists every decision that cannot yet be made from available evidence. Nothing here is implemented as an assumption: the affected feature either stays configurable or waits for the decision.
@@ -31,7 +31,7 @@ This register lists every decision that cannot yet be made from available eviden
 | OQ-011 | Audit log retention per institution (default 24 months)? | Storage cost, compliance | Phase 18 | Open (default applied) |
 | OQ-012 | Are custom domains required for white-label, or is branding sufficient? | Hosting, TLS, tenant resolution | Phase 17 | Open |
 | OQ-013 | Required backup/RPO/RTO commitments for institutional contracts? | Operations cost and SLA | Phase 20 | Open |
-| OQ-014 | Should room bookings require approval, and by whom? | Facilities workflow | Phase 5 | Open (auto-approve within scope) |
+| OQ-014 | Should room bookings require approval, and by whom? | Facilities workflow | Phase 5 | **Closed** — auto-approve within scope |
 | OQ-015 | Are multi-campus institutions billed per campus or per student band? | Commercial model | Phase 16 | Open |
 | OQ-016 | Are campuses part of Phase 4, and is a campus required for every faculty? | Hierarchy shape, onboarding friction, Phase 5 room model | Phase 4 | **Closed** — optional campus on faculty |
 | OQ-017 | Does a course belong to one programme, or can several programmes require it? | Curriculum model and duplicate courses | Phase 4 | **Closed** — `programme_courses` join table |
@@ -43,6 +43,12 @@ This register lists every decision that cannot yet be made from available eviden
 | OQ-023 | What does a course offering contain in this phase? | Timetable and workload inputs | Phase 4b | **Closed** — offering + lecturer assignments + groups |
 | OQ-024 | How should calendar entries and teaching weeks be modelled? | Calendar UI, scheduling exclusions | Phase 4b | **Closed** — events per session, teaching weeks derived |
 | OQ-025 | What should the first import pass cover, and how should it handle bad rows? | Data quality, partial-import risk | Phase 4b | **Closed** — CSV for students and lecturers, dry run then all-or-nothing |
+| OQ-026 | Should classrooms, lecture halls and laboratories be separate tables? | Schema shape, duplicated conflict rules, suitability checks | Phase 5 | **Closed** — one `rooms` table with a `room_type` enum shared with courses |
+| OQ-027 | Must every building belong to a campus? | Multi-campus reporting, onboarding friction | Phase 5 | **Closed** — required; a Main campus is created on demand |
+| OQ-028 | How are room features and equipment stored? | Suitability checks in Phase 7 | Phase 5 | **Closed** — institution catalogue plus link table with quantity |
+| OQ-029 | How is room availability defined, and is it binding? | Booking validation, utilisation denominator | Phase 5 | **Closed** — weekly windows per room per semester, binding |
+| OQ-030 | How are bookings recorded, approved and capacity-checked? | Overlap enforcement, cancellation, reporting | Phase 5 | **Closed** — one dated row per booking, auto-approved, capacity enforced |
+| OQ-031 | What is the utilisation denominator? | Reporting accuracy | Phase 5 | **Closed** — availability windows × teaching weeks |
 
 ## How to close an item
 
@@ -69,6 +75,13 @@ This register lists every decision that cannot yet be made from available eviden
 | OQ-023 | A course offering is course + session + semester + optional coordinator, with separate lecturer assignments (lead/assistant, contact hours) and linked student groups. One offering per course per semester. | 2026-11-27 | [Database §4.2](../05-database/DATABASE_DESIGN.md) |
 | OQ-024 | Calendar events belong to a session and may be narrowed to one of its semesters. Teaching weeks are derived from the semester's teaching window and the holiday events covering it; nothing is stored. | 2026-11-27 | [Roadmap §5.2](../10-implementation/IMPLEMENTATION_ROADMAP.md) |
 | OQ-025 | The first import pass covers students and lecturers in CSV. It validates every row first (dry run with per-row errors), then inserts the whole batch in one statement: one bad row imports nothing. Excel files are a later addition. | 2026-11-27 | [Roadmap §5.2](../10-implementation/IMPLEMENTATION_ROADMAP.md) |
+| OQ-014 | Bookings are auto-approved within scope. Anyone who may book a room confirms it immediately; the only hard rules are capacity, the semester window, the room's availability and non-overlap. Cancelling frees the slot, and an approval queue can be added later without changing the booking model. | 2026-11-27 | [Roadmap §5.3](../10-implementation/IMPLEMENTATION_ROADMAP.md) |
+| OQ-026 | Classrooms, lecture halls, laboratories, studios and seminar rooms share one `rooms` table with a `room_type` enum whose values are exactly `courses.required_room_type`, so a suitability check compares two columns instead of mapping vocabularies. | 2026-11-27 | [Database §4.3](../05-database/DATABASE_DESIGN.md) |
+| OQ-027 | A building always belongs to a campus (`campus_id NOT NULL`). If the institution has no campus yet, the first building creates a "Main campus" automatically; if two attempts race, the loser reuses the campus that won. | 2026-11-27 | [Database §4.3](../05-database/DATABASE_DESIGN.md) |
+| OQ-028 | Each institution maintains its own feature catalogue (`room_features`) and links features to rooms through `room_feature_links`, optionally with a quantity. The partial unique index allows a link to be archived and restored. | 2026-11-27 | [Database §4.3](../05-database/DATABASE_DESIGN.md) |
+| OQ-029 | Availability is a set of weekly windows per room per semester (ISO weekday, opening and closing time). Windows of one room may not overlap on the same day, and a booking must fit inside one window: a room with no window in a semester cannot be booked there. That makes the utilisation denominator well defined. | 2026-11-27 | [Database §5](../05-database/DATABASE_DESIGN.md) |
+| OQ-030 | A booking is one dated row (institution wall-clock timestamps, one day, expected attendees, optional department). A weekly series is expanded by the caller into individual rows, so overlap checks and single-occurrence cancellation stay simple. Capacity, semester window and availability are enforced by a trigger; overlap by an exclusion constraint over confirmed bookings. | 2026-11-27 | [Database §5](../05-database/DATABASE_DESIGN.md) |
+| OQ-031 | Utilisation is booked hours over available hours per room, where available hours are the room's weekly windows multiplied by how often each weekday occurs in the semester's teaching weeks (holiday weeks removed). The numerator uses the same instants: only the part of a confirmed booking that falls inside a teaching day and the room's window counts, so a booking in a holiday, an exam week or outside a window is reported as excluded and utilisation cannot exceed 100%. Confirmed ad-hoc bookings form the numerator now; published timetable entries join it in Phase 6. | 2026-11-27 | [Roadmap §5.3](../10-implementation/IMPLEMENTATION_ROADMAP.md) |
 
 ## Revision history
 
@@ -78,3 +91,5 @@ This register lists every decision that cannot yet be made from available eviden
 | 1.1 | 2026-11-25 | Product | Closed OQ-003 (invitation-only), OQ-004 (`/institution` with switcher) and OQ-005 (no impersonation) for Phase 3 |
 | 1.2 | 2026-11-25 | Product | Closed OQ-016 (optional campus), OQ-017 (`programme_courses`), OQ-018 (archive only) and OQ-019 (Phase 4 scope) for Phase 4 |
 | 1.3 | 2026-11-27 | Product | Closed OQ-020 … OQ-025 (records before accounts, identifiers, cohort groups, offering contents, derived teaching weeks, CSV dry-run imports) for Phase 4b |
+| 1.4 | 2026-11-27 | Product | Closed OQ-014 (auto-approved bookings) and OQ-026 … OQ-031 (room model, buildings and campuses, feature catalogue, binding availability, dated bookings with enforced capacity, utilisation denominator) for Phase 5 |
+| 1.5 | 2026-11-27 | Product | Clarified OQ-031 after a review: the numerator is clipped to the same teaching days and windows as the denominator, and out-of-scope bookings are reported as excluded |

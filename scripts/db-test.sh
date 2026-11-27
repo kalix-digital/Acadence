@@ -66,3 +66,6 @@ echo "running academic structure tests"
 
 echo "running people, offerings and calendar tests"
 "${PSQL[@]}" -d "$DB" -f supabase/tests/people_offerings_calendar.sql
+
+echo "running facilities tests"
+"${PSQL[@]}" -d "$DB" -f supabase/tests/facilities.sql

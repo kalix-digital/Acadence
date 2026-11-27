@@ -1,6 +1,6 @@
 # Acadence — Screen Inventory
 
-> **Document ID:** UX-SCR-001 · **Version:** 1.3 · **Status:** Phases 1–4b implemented; remainder planned · **Date:** 2026-11-27 · **Owner:** Design
+> **Document ID:** UX-SCR-001 · **Version:** 1.4 · **Status:** Phases 1–5 implemented; remainder planned · **Date:** 2026-11-27 · **Owner:** Design
 > **Related:** [Design System](DESIGN_SYSTEM.md) · [PRD](../03-requirements/PRD.md) · [Roadmap](../10-implementation/IMPLEMENTATION_ROADMAP.md)
 
 ## 1. Route map
@@ -34,7 +34,13 @@
 | `/institution/academics/lecturers` | Lecturer roster by department, CSV import | Academic admin | 4b | **Implemented** |
 | `/institution/academics/groups` | Cohort groups and many-to-many membership | Dept admin | 4b | **Implemented** |
 | `/institution/academics/calendar` | Calendar events and derived teaching weeks | Academic admin | 4b | **Implemented** |
-| `/institution/rooms` | Rooms, availability, bookings, utilisation | Academic admin | 5 | Planned |
+| `/institution/facilities` | Facilities overview: counts, sections, conflict model | Facilities admin, dept admin | 5 | **Implemented** |
+| `/institution/facilities/buildings` | Buildings per campus | Facilities admin | 5 | **Implemented** |
+| `/institution/facilities/rooms` | Rooms, capacity, accessibility, room equipment | Facilities admin | 5 | **Implemented** |
+| `/institution/facilities/features` | Institution feature/equipment catalogue | Facilities admin | 5 | **Implemented** |
+| `/institution/facilities/availability` | Weekly availability windows per room per semester | Facilities admin | 5 | **Implemented** |
+| `/institution/facilities/bookings` | Ad-hoc bookings and cancellation | Facilities admin, dept admin | 5 | **Implemented** |
+| `/institution/facilities/utilisation` | Booked over available hours per room | Facilities admin | 5 | **Implemented** |
 | `/faculty` | Faculty dashboard | Faculty admin | 15 | Planned |
 | `/faculty/timetables` | Faculty timetables and approvals | Faculty admin | 6 | Planned |
 | `/department` | Department dashboard | Dept admin | 15 | Planned |
@@ -74,3 +80,5 @@ Every screen must include:
 | 1.0 | 2026-11-23 | Design | Initial inventory |
 | 1.1 | 2026-11-25 | Design | Marked Phase 2 and Phase 3 routes implemented; campuses deferred |
 | 1.2 | 2026-11-25 | Design | Added the Phase 4 academic screens; students, offerings, lecturers and calendar moved to Phase 4b |
+| 1.3 | 2026-11-27 | Design | Marked the Phase 4b people, offering and calendar screens implemented |
+| 1.4 | 2026-11-27 | Design | Replaced the single planned `/institution/rooms` row with the seven Phase 5 facilities screens |

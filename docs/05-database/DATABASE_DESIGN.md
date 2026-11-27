@@ -1,6 +1,6 @@
 # Acadence — Database Design
 
-> **Document ID:** DBD-001 · **Version:** 1.3 · **Status:** Approved for migration authoring · **Date:** 2026-11-27 · **Owner:** Database Architecture
+> **Document ID:** DBD-001 · **Version:** 1.4 · **Status:** Approved for migration authoring · **Date:** 2026-11-27 · **Owner:** Database Architecture
 > **Related:** [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [SRS](../03-requirements/SRS.md) · [API](../06-api/API_SPECIFICATION.md) · [ADR-003](../13-adr/ADR-003-rls-multi-tenancy.md)
 
 ## 1. Principles
@@ -20,7 +20,8 @@
 | `institution_status` | `pending`, `active`, `suspended`, `archived` |
 | `membership_role` | `platform_admin`, `support_operator`, `institution_admin`, `faculty_admin`, `department_admin`, `lecturer`, `student` |
 | `membership_status` | `invited`, `active`, `suspended`, `revoked` |
-| `room_type` | `lecture_hall`, `laboratory`, `seminar_room`, `computer_lab`, `studio`, `other` |
+| `room_type` | `classroom`, `lecture_hall`, `laboratory`, `studio`, `seminar` (identical to `courses.required_room_type`) |
+| `booking_status` | `confirmed`, `cancelled` |
 | `timetable_status` | `draft`, `validated`, `published`, `superseded`, `archived` |
 | `conflict_severity` | `critical`, `high`, `medium`, `low` |
 | `conflict_kind` | `lecturer_overlap`, `room_overlap`, `group_overlap`, `capacity`, `suitability`, `lecturer_unavailable`, `workload`, `calendar` |
@@ -124,10 +125,12 @@ erDiagram
 
 | Table | Key columns | Constraints |
 | --- | --- | --- |
-| `buildings` | `id`, `institution_id`, `campus_id`, `name`, `code` | `unique (institution_id, code)` |
-| `rooms` | `id`, `institution_id`, `building_id`, `name`, `code`, `room_type`, `capacity`, `floor`, `features text[]`, `accessibility_notes` | `unique (institution_id, code)`; `capacity > 0` |
-| `room_availability` | `id`, `institution_id`, `room_id`, `semester_id`, `day_of_week`, `opens_at`, `closes_at` | `day_of_week` CHECK 1–7; `closes_at > opens_at` |
-| `room_bookings` | `id`, `institution_id`, `room_id`, `starts_at timestamptz`, `ends_at timestamptz`, `purpose`, `created_by` | Overlap exclusion (§5) |
+| `buildings` | `id`, `institution_id`, `campus_id`, `name`, `code`, `address`, `notes`, `archived_at` | `unique (institution_id, code)`; `campus_id` NOT NULL and tenant-checked (OQ-027) |
+| `rooms` | `id`, `institution_id`, `building_id`, `name`, `code`, `room_type`, `capacity`, `floor`, `accessibility_notes`, `archived_at` | `unique (institution_id, code)`; `capacity` 1–5000; `room_type` shares the course vocabulary (OQ-026) |
+| `room_features` | `id`, `institution_id`, `name`, `category` (`equipment`/`accessibility`/`layout`/`other`), `archived_at` | Partial unique `(institution_id, lower(name)) WHERE archived_at IS NULL` |
+| `room_feature_links` | `id`, `institution_id`, `room_id`, `feature_id`, `quantity`, `archived_at` | Partial unique `(room_id, feature_id) WHERE archived_at IS NULL`; composite tenant FKs (OQ-028) |
+| `room_availability` | `id`, `institution_id`, `room_id`, `semester_id`, `day_of_week`, `opens_at time`, `closes_at time`, `archived_at` | `day_of_week` 1–7; `closes_at > opens_at`; overlapping windows of one room on one day rejected by trigger (OQ-029) |
+| `room_bookings` | `id`, `institution_id`, `room_id`, `semester_id`, `department_id`, `title`, `purpose`, `starts_at timestamp`, `ends_at timestamp`, `expected_attendees`, `status`, `booked_by`, `cancelled_at`, `cancelled_by` | `ends_at > starts_at`; capacity, semester window and availability checked by trigger; overlap exclusion over confirmed rows (OQ-030) |
 
 ### 4.4 Timetables
 
@@ -166,13 +169,19 @@ erDiagram
 ## 5. Integrity under concurrency
 
 ```sql
--- Room double-booking protection
+-- Room double-booking protection (implemented in 20261127120000_facilities.sql).
+-- Booking times are institution wall-clock timestamps, so a plain tsrange is used,
+-- and a cancelled booking stops reserving its slot.
 alter table room_bookings
-  add constraint no_room_overlap
+  add constraint room_bookings_no_overlap
   exclude using gist (
     room_id with =,
-    tstzrange(starts_at, ends_at, '[)') with &&
-  );
+    tsrange(starts_at, ends_at, '[)') with &&
+  ) where (status = 'confirmed');
+
+-- Capacity, the semester window and the room's availability window are checked
+-- by the validate_room_booking trigger before the row is written, because they
+-- need to read rooms and room_availability, which an exclusion constraint cannot.
 
 -- Within a version: no lecturer, room or group may be double-booked.
 alter table timetable_entries
@@ -215,7 +224,7 @@ Publishing is a single transaction that (a) re-validates the draft, (b) marks th
 | `(version_id, day_of_week, starts_at)` on entries | Grid rendering |
 | `(lecturer_id)` and `(group_id)` on entries | Personal timetable views |
 | `(semester_id, status)` on timetable_versions | Resolve the live version |
-| `(institution_id, starts_at)` on room_bookings | Conflict lookups |
+| `(room_id, starts_at)` and `(semester_id, starts_at)` on room_bookings | Overlap lookups and semester reports |
 | `(user_id, read_at)` on notifications | Unread counts |
 | `(institution_id, created_at desc)` on audit_logs | Admin audit view |
 | `(status, locked_at)` on job_queue | Worker polling |
@@ -276,6 +285,7 @@ $$;
 - **Read:** `institution_id in (select * from auth_institution_ids())`, narrowed further by role/scope where required (e.g. `department_admin` limited to `auth_department_ids(institution_id)`).
 - **Write:** capability check, e.g. `auth_role(institution_id) in ('institution_admin','faculty_admin','department_admin')`, plus scope restriction for faculty/department admins.
 - **Academic structure:** reads are `institution_id in (select public.auth_institution_ids())`; writes call `public.can_manage_academic_unit(institution_id, faculty_id, department_id)`, which allows institution admins anywhere in the institution, faculty admins inside `auth_faculty_ids()`, and department admins inside `auth_department_ids()`. No academic table has a DELETE policy or a DELETE grant for `authenticated` — archiving is the only removal (OQ-018).
+- **Facilities:** reads are institution-wide. Buildings, rooms, features, equipment and availability are written when `auth_can_manage_facilities(institution_id)` is true, which covers institution and faculty administrators (both hold `manage_facilities`). Bookings additionally allow a department administrator when `department_id in (select auth_department_ids(institution_id))`, so a department books its own rooms and cannot touch another department's booking. The department scope is re-checked in the `WITH CHECK` of the update policy, so a booking cannot be moved out of scope.
 - **People, groups, offerings and calendar:** policies resolve the owning unit first — `programme_department(programme_id)` for students and groups, `student_group_programme(group_id)` for memberships, `department_id` for lecturers, and `course_department(course_id)` / `offering_course(offering_id)` for offerings and their assignments. Calendar events are institution-level. Every helper is a definer function, so no policy reads the table it protects.
 - **Student/lecturer self-service:** policies join to `students.user_id` / `lecturers.user_id` and only expose published versions.
 - **Append-only tables** (`audit_logs`, `ai_credit_ledger`): no UPDATE or DELETE policies; writes happen through `SECURITY DEFINER` functions with explicit authorisation.
@@ -316,3 +326,5 @@ Phase 3 extends this with `supabase/tests/institution_management.sql`: invitatio
 | 1.0 | 2026-11-23 | Database Architecture | Initial schema, ERD, constraints and RLS model |
 | 1.1 | 2026-11-25 | Engineering | Added Phase 3 invitation, activity and profile-email tables to the ERD, catalogue and isolation notes |
 | 1.2 | 2026-11-25 | Engineering | Phase 4 academic structure: optional campus on faculties, composite tenant FKs, `programme_courses` replacing `courses.programme_id`, archive-only removal and the academic scope helper |
+| 1.3 | 2026-11-27 | Engineering | Phase 4b people, groups, offerings and calendar tables, the `semesters` tenant-session key and derived teaching weeks |
+| 1.4 | 2026-11-27 | Engineering | Phase 5 facilities: corrected `room_type` and added `booking_status`; buildings, rooms, feature catalogue, links, binding availability, dated bookings with the confirmed-only overlap exclusion and the facilities scope helper |

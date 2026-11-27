@@ -1,6 +1,6 @@
 # Acadence — Technical Implementation Roadmap
 
-> **Document ID:** IMP-001 · **Version:** 1.5 · **Status:** Active · **Date:** 2026-11-27 · **Owner:** Engineering Lead
+> **Document ID:** IMP-001 · **Version:** 1.7 · **Status:** Active · **Date:** 2026-11-27 · **Owner:** Engineering Lead
 > **Related:** [SRS](../03-requirements/SRS.md) · [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [Testing](../09-testing/TESTING_STRATEGY.md) · [Screen Inventory](../07-ui-ux/SCREEN_INVENTORY.md)
 
 ## 1. Delivery rules
@@ -20,7 +20,7 @@
 | 3 | Institution management | **Complete** (awaiting approval; hosted verification pending) | Provision → configure → onboard; suspension; membership scopes |
 | 4 | Academic administration | **Complete** (awaiting approval) | Campuses, faculties, departments, sessions, semesters, programmes, courses, curricula |
 | 4b | People, groups, offerings & calendar | **Complete** (merged to `main`; hosted verification pending) | Students, lecturers, cohort groups, course offerings, academic calendar, CSV imports |
-| 5 | Classroom & facilities | Not started | Rooms, features, availability, bookings without overlap, utilisation |
+| 5 | Classroom & facilities | **Complete** (awaiting approval; hosted verification pending) | Buildings, rooms, features, availability, bookings without overlap, utilisation |
 | 6 | Timetable management | Not started | Drafts, grid editing, publish, immutable versions, personal views, change requests |
 | 7 | Conflict detection | Not started | All conflict kinds, severity, explanations, publication block, concurrency safety |
 | 8 | Timetable generation | Not started | Feasible drafts from constraints, unsatisfiable reporting, cancellable runs |
@@ -196,6 +196,46 @@
 - `npm run build` — pass; the five new routes are dynamic and appear in the route table.
 - Not verified: no hosted Supabase project is attached, so no screen has been exercised signed in; CSV import has been unit-checked only through its validation paths, not against a live database.
 
+## 5.3 Phase 5 report (delivered)
+
+**Decisions applied before implementation**
+
+| Open question | Decision |
+| --- | --- |
+| OQ-014 | Bookings are auto-approved within scope. There is no approval queue; cancelling frees the slot. |
+| OQ-026 | One `rooms` table for every room type, with a `room_type` enum identical to `courses.required_room_type`. |
+| OQ-027 | `buildings.campus_id` is NOT NULL; the first building creates a "Main campus" when the institution has none. |
+| OQ-028 | Institution-managed feature catalogue plus `room_feature_links` with an optional quantity. |
+| OQ-029 | Availability is weekly windows per room per semester and is binding: a booking outside a window is refused. |
+| OQ-030 | One dated row per booking, recurrence expanded by the caller, capacity enforced. |
+| OQ-031 | Utilisation is booked hours over availability windows × teaching weeks. Booked hours are clipped to those same teaching days and windows, and a booking outside them is reported as excluded rather than counted. |
+
+**Implemented**
+
+- Migration `20261127120000_facilities.sql`: `buildings`, `rooms`, `room_features`, `room_feature_links`, `room_availability`, `room_bookings`; enums `room_type` and `booking_status`; `create extension if not exists btree_gist`.
+- **Overlap (FR-ROOM-004).** A partial exclusion constraint over `(room_id, tsrange(starts_at, ends_at, '[)'))` where `status = 'confirmed'` rejects double bookings in the database, including concurrent inserts, and a cancelled booking releases its interval.
+- **Capacity, availability and semester (FR-ROOM-002/003/007).** `validate_room_booking` runs before the row is written and refuses an archived room, an attendee count above capacity, a time outside a defined availability window, a booking outside the semester, or one that crosses midnight.
+- **Room retirement.** Archiving a room with upcoming confirmed bookings is refused, and capacity cannot be reduced below an existing booking; both errors name the reason.
+- **Availability collisions.** Two windows of the same room on the same weekday may not overlap, so "is this room open then?" has one answer.
+- **Screens.** `/institution/facilities` plus `buildings`, `rooms` (with room equipment), `features`, `availability`, `bookings` and `utilisation`. The overview and navigation count real records; nothing is mocked.
+- **Utilisation (FR-ROOM-006).** `src/lib/facilities/utilisation.ts` reuses `teachingWeeks` from Phase 4b, so holiday weeks leave the denominator, and the report is computed per room with building and campus context. The numerator is clipped to the same teaching days and availability windows, so a booking in a holiday, an exam week or a gap outside a window is counted as excluded (`excludedBookingCount`, shown on the screen) instead of pushing a room above 100%. The ratio is computed from minutes and capped at 1.
+- **Permissions.** Institution and faculty administrators manage facilities through `auth_can_manage_facilities`; department administrators may create and cancel bookings for their own department only. Every new table is archive-only with an append-only activity trail.
+
+**Not yet implemented**
+
+- Approval workflows for bookings (decided against in OQ-014; the schema would only need a status value).
+- Conflict checking against published timetable entries (FR-ROOM-005): timetables arrive in Phase 6, so the ad-hoc booking currently checks other ad-hoc bookings only.
+- Recurring booking rules; a series is stored as one row per date, which is a deliberate trade-off for simple overlap checks and per-occurrence cancellation.
+- Room suitability rules (a laboratory course needing a laboratory) and expected class size against capacity at scheduling time — Phase 7 builds them on `rooms.room_type`, `room_feature_links` and `course_offerings.expected_size`.
+
+**Verification performed**
+
+- `npm run db:test` — six migrations apply with `ON_ERROR_STOP=1`; all five suites pass. Phase 5 coverage: buildings and rooms created by an administrator; duplicate code and zero capacity rejected; a department administrator and a lecturer refused room writes; an overlapping availability window rejected while a back-to-back one is accepted; a valid booking confirmed; overlap rejected with `23P01`; adjacencies accepted; over-capacity, out-of-window, out-of-semester and midnight-crossing bookings rejected; cancellation freeing a slot; department scoping on insert and cancel; neighbouring-tenant invisibility; archive and shrink guards; no DELETE for `authenticated`; activity logging including `facilities.booking.cancelled`.
+- `npm run lint` — pass, no warnings.
+- `npm run build` — pass; the seven facilities routes are dynamic and appear in the route table.
+- Utilisation mismatch fixed after review: bookings during holiday or exam weeks used to join the numerator while the denominator excluded those weeks, which could report more than 100%. Booked minutes are now intersected with the teaching-day windows that form the denominator. A scripted check of the pure function (a 10-hour Monday window, a two-week teaching window whose second week is a holiday, one 2-hour booking in each week) reports 10 available hours, 2 booked hours, 20% utilisation and one excluded booking; the previous numerator counted both bookings for 40%.
+- Not verified: no hosted Supabase project is attached, so no screen has been exercised signed in, and the `btree_gist` extension has only been created on the disposable cluster.
+
 ## 6. Project structure
 
 ```
@@ -264,7 +304,7 @@ acadence/
 | 2 | FR-AUTH-001…010 | `/sign-in`, `/forgot-password`, `/reset-password`, `/no-access`, `/institution` |
 | 3 | FR-INST-001…010 | `/institution/*`, `/platform/institutions*` |
 | 4 | FR-ACAD-001…012 | `/institution/academics/*` |
-| 5 | FR-ROOM-001…007 | `/institution/rooms` |
+| 5 | FR-ROOM-001…007 | `/institution/facilities*` |
 | 6 | FR-TT-001…012 | `/department/timetables`, `/lecturer/timetable`, `/student/timetable` |
 | 7 | FR-CONF-001…010 | conflict report, publish dialog |
 | 8 | FR-GEN-001…006 | generation run screens |
@@ -283,3 +323,5 @@ acadence/
 | 1.3 | 2026-11-25 | Engineering | Phase 3 merged to `main`; Phase 4 academic structure reported complete pending approval, with people and scheduling records deferred to 4b |
 | 1.4 | 2026-11-27 | Engineering | Phase 4b students, lecturers, cohort groups, course offerings, academic calendar and CSV imports reported complete pending approval |
 | 1.5 | 2026-11-27 | Engineering | Phase 4b merged to `main`; Phase 5 classroom and facilities management opened |
+| 1.6 | 2026-11-27 | Engineering | Phase 5 buildings, rooms, feature catalogue, binding availability, non-overlapping bookings and the utilisation report reported complete pending approval |
+| 1.7 | 2026-11-27 | Engineering | Utilisation numerator clipped to the teaching-day availability used by the denominator, with out-of-scope bookings reported as excluded; Phase 5 committed |
