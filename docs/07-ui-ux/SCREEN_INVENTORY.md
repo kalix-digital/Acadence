@@ -1,6 +1,6 @@
 # Acadence — Screen Inventory
 
-> **Document ID:** UX-SCR-001 · **Version:** 1.4 · **Status:** Phases 1–5 implemented; remainder planned · **Date:** 2026-11-27 · **Owner:** Design
+> **Document ID:** UX-SCR-001 · **Version:** 1.5 · **Status:** Phases 1–6 implemented; remainder planned · **Date:** 2026-11-28 · **Owner:** Design
 > **Related:** [Design System](DESIGN_SYSTEM.md) · [PRD](../03-requirements/PRD.md) · [Roadmap](../10-implementation/IMPLEMENTATION_ROADMAP.md)
 
 ## 1. Route map
@@ -41,16 +41,22 @@
 | `/institution/facilities/availability` | Weekly availability windows per room per semester | Facilities admin | 5 | **Implemented** |
 | `/institution/facilities/bookings` | Ad-hoc bookings and cancellation | Facilities admin, dept admin | 5 | **Implemented** |
 | `/institution/facilities/utilisation` | Booked over available hours per room | Facilities admin | 5 | **Implemented** |
+| `/institution/timetables` | Drafts per semester and published version summary | Dept/faculty admin | 6 | **Implemented** |
+| `/institution/timetables/drafts/[id]` | Draft week grid (drag and drop), entry editor, publish, duplicate, CSV import | Dept/faculty admin | 6 | **Implemented** |
+| `/institution/timetables/views` | Department, faculty, lecturer, group and room views with day/week filters | Scoped admin | 6 | **Implemented** |
+| `/institution/timetables/versions` | Published version history and archive | Scoped admin | 6 | **Implemented** |
+| `/institution/timetables/versions/[id]` | Immutable version snapshot | Scoped admin | 6 | **Implemented** |
+| `/institution/timetables/requests` | Change request review and decisions | Dept/faculty admin | 6 | **Implemented** |
 | `/faculty` | Faculty dashboard | Faculty admin | 15 | Planned |
-| `/faculty/timetables` | Faculty timetables and approvals | Faculty admin | 6 | Planned |
+| `/faculty/timetables` | Faculty timetables and approvals — served by `/institution/timetables` views | Faculty admin | 6 | Merged into `/institution/timetables` |
 | `/department` | Department dashboard | Dept admin | 15 | Planned |
-| `/department/timetables` | Draft grid, conflicts, publish | Dept admin | 6–7 | Planned |
+| `/department/timetables` | Draft grid, conflicts, publish — served by `/institution/timetables` | Dept admin | 6–7 | Merged into `/institution/timetables` |
 | `/department/workloads` | Workload review | Dept admin | 9 | Planned |
 | `/lecturer` | Lecturer dashboard | Lecturer | 15 | Planned |
-| `/lecturer/timetable` | Personal timetable | Lecturer | 6 | Planned |
-| `/lecturer/requests` | Change requests | Lecturer | 6 | Planned |
+| `/lecturer/timetable` | Personal timetable and change requests | Lecturer | 6 | **Implemented** |
+| `/lecturer/requests` | Change requests — handled inline on the personal timetable | Lecturer | 6 | Merged into `/lecturer/timetable` |
 | `/student` | Student dashboard | Student | 15 | Planned |
-| `/student/timetable` | Personal timetable and exam dates | Student | 6 | Planned |
+| `/student/timetable` | Personal published timetable | Student | 6 | **Implemented** |
 | `/student/attendance` | Own attendance | Student | 12 | Planned |
 | `/student/study` | AI study material and documents | Student | 13–14 | Planned |
 | `/shared/calendar` | Academic calendar | All staff | 10 | Planned |

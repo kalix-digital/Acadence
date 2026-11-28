@@ -74,10 +74,9 @@ export const navigation: NavSection[] = [
       },
       {
         label: "Timetable Management",
-        href: "#",
+        href: "/institution/timetables",
         icon: CalendarRange,
         capability: "manage_timetables",
-        phase: 6,
       },
       {
         label: "Scheduling Engine",
@@ -216,7 +215,7 @@ export const iconRailItems: NavItem[] = [
   {
     label: "Timetables",
     icon: CalendarRange,
-    href: "#",
+    href: "/institution/timetables",
     capability: "manage_timetables",
   },
   {

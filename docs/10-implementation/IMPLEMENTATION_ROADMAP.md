@@ -1,6 +1,6 @@
 # Acadence — Technical Implementation Roadmap
 
-> **Document ID:** IMP-001 · **Version:** 1.7 · **Status:** Active · **Date:** 2026-11-27 · **Owner:** Engineering Lead
+> **Document ID:** IMP-001 · **Version:** 1.9 · **Status:** Active · **Date:** 2026-11-28 · **Owner:** Engineering Lead
 > **Related:** [SRS](../03-requirements/SRS.md) · [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [Testing](../09-testing/TESTING_STRATEGY.md) · [Screen Inventory](../07-ui-ux/SCREEN_INVENTORY.md)
 
 ## 1. Delivery rules
@@ -21,7 +21,7 @@
 | 4 | Academic administration | **Complete** (awaiting approval) | Campuses, faculties, departments, sessions, semesters, programmes, courses, curricula |
 | 4b | People, groups, offerings & calendar | **Complete** (merged to `main`; hosted verification pending) | Students, lecturers, cohort groups, course offerings, academic calendar, CSV imports |
 | 5 | Classroom & facilities | **Complete** (merged to `main`; hosted verification pending) | Buildings, rooms, features, availability, bookings without overlap, utilisation |
-| 6 | Timetable management | Not started | Drafts, grid editing, publish, immutable versions, personal views, change requests |
+| 6 | Timetable management | **Complete** (awaiting approval; hosted verification pending) | Drafts, grid editing, publish, immutable versions, personal views, change requests |
 | 7 | Conflict detection | Not started | All conflict kinds, severity, explanations, publication block, concurrency safety |
 | 8 | Timetable generation | Not started | Feasible drafts from constraints, unsatisfiable reporting, cancellable runs |
 | 9 | Lecturer workload | Not started | Derived hours, limits, warnings, reports, approvals |
@@ -236,6 +236,56 @@
 - Utilisation mismatch fixed after review: bookings during holiday or exam weeks used to join the numerator while the denominator excluded those weeks, which could report more than 100%. Booked minutes are now intersected with the teaching-day windows that form the denominator. A scripted check of the pure function (a 10-hour Monday window, a two-week teaching window whose second week is a holiday, one 2-hour booking in each week) reports 10 available hours, 2 booked hours, 20% utilisation and one excluded booking; the previous numerator counted both bookings for 40%.
 - Not verified: no hosted Supabase project is attached, so no screen has been exercised signed in, and the `btree_gist` extension has only been created on the disposable cluster.
 
+## 5.4 Phase 6 report (delivered)
+
+| Field | Value |
+| --- | --- |
+| Scope | Timetable drafts, week grid editing, entry assignment, import, publication, immutable versions, department/faculty/lecturer/group/room views, change requests. |
+| Migration | `20261128120000_timetables.sql` |
+| Tests | `supabase/tests/timetables.sql` |
+
+**Decisions applied before implementation**
+
+| Open question | Decision |
+| --- | --- |
+| OQ-007 | Teaching timetables only. Exam periods refuse teaching entries unless the institution allows teaching in exams. |
+| OQ-032 | A weekly pattern per version: weekday plus start/end time. Holiday and exam weeks stay derived from the calendar. |
+| OQ-033 | One live version per semester. A scoped draft publishes into it, carrying the previous version's entries outside that scope. |
+| OQ-034 | Publication refuses the hard rules listed below; Phase 7 extends the same service with severity, explanations and soft warnings. |
+| OQ-035 | Drag-and-drop grid with a form that can perform every move, so the editor works without a pointer. |
+| OQ-036 | Lecturer requests, administrator approval, and approval republishes a new version in one transaction. |
+| OQ-037 | CSV dry run then all-or-nothing import; draft duplication matches by code and reports skipped rows. |
+
+**Implemented**
+
+- Migration `20261128120000_timetables.sql`: `timetable_drafts`, `timetable_versions`, `timetable_entries`, `timetable_change_requests`; enums `timetable_status` and `change_request_status`; the `timerange` type over `time`.
+- **Drafts and scopes (FR-TT-001).** A draft belongs to one semester and to a department, a faculty or the whole institution. Entry writes are refused when the offering sits in another semester or outside the draft's scope; the department is derived from the offering.
+- **Grid entries (FR-TT-002/003).** Add, edit, move and remove draft entries with offering, lecturer, room, student group, weekday and times, plus fixed entries that have no offering. Six exclusion constraints reject a double-booked room, lecturer or group inside a draft and again inside a published version.
+- **Publication (FR-TT-005/006/010).** `publish_timetable_draft` marks the live version `superseded`, inserts the next version number, copies the live rows outside the draft's scope and the draft's rows, all in one transaction. The partial unique index allows exactly one live version per semester; a failed publish leaves no version behind. Version entries are immutable: the entry trigger refuses an update or delete, and no update policy exists for published rows.
+- **Validation before publishing (OQ-034).** `src/lib/timetables/conflicts.ts` checks working days and teaching hours, room availability windows, capacity against the offering's expected size, exam-period occurrences, archived references and overlaps. Any issue blocks publication with a readable list; the database constraints remain the backstop.
+- **Version history (FR-TT-007).** Every version records its number, publisher, timestamp, change summary and entry count; superseded versions can be archived and stay in history. The live version cannot be archived without a replacement.
+- **Views (FR-TT-008).** `/institution/timetables/views` renders department, faculty, lecturer, group and room views from the live version, with weekday and teaching-week filters. Holiday weeks are labelled from the derived calendar.
+- **Import and duplication (FR-TT-004/009).** Timetable CSV import matches by course code, staff number and room/group code, shows a per-row dry run and inserts the whole batch or nothing. Duplicating a draft into another semester re-matches by code and reports every skipped row.
+- **Change requests (OQ-036).** A lecturer requests a change to an entry they teach; one open request per entry. Approval builds a department draft of the live version with the proposal applied and publishes a new version; rejection keeps the request and note. Review is scoped to the entry's department.
+- **Personal views (FR-TT-011).** `/lecturer/timetable` and `/student/timetable` read only the live version, filtered by the lecturer record or the student's cohort groups. Drafts are invisible to both roles.
+- **Screens.** `/institution/timetables` (drafts and versions), `drafts/[id]` (grid, entry form, publish, duplicate, import), `views`, `versions`, `versions/[id]`, `requests`, plus the two personal views. Navigation links point at the module instead of a placeholder.
+
+**Not yet implemented**
+
+- Conflict severity, soft warnings, explanations, suggested resolutions and the conflict report screen (Phase 7). Phase 6 blocks on every issue it finds instead of ranking them.
+- Notifications on publication or change approval (Phase 11); the activity trail records the events.
+- Room suitability (room type and feature matching), lecturer availability windows and workload limits at publication (Phases 7 and 9).
+- Published timetable entries are not yet part of the facilities utilisation numerator, which still counts ad-hoc bookings only; joining the two needs a shared occupancy view.
+- Per-occurrence exceptions (one cancelled week, a single room change) and ICS/PDF export (FR-TT-012) are not built.
+- Excel import; only CSV is read.
+
+**Verification performed**
+
+- `npm run db:test` — seven migrations apply with `ON_ERROR_STOP=1`; all six suites pass. Phase 6 coverage: draft creation and scope, entry department derivation, room/lecturer/group overlap rejection inside a draft, another-semester and another-department offerings refused, publishing creates version 1 and copies entries, published rows cannot be edited or deleted, no DELETE grant on versions, duplication copies the re-offered course and reports the skipped row, publishing a second department clashes on the shared room and succeeds after the move while carrying both departments, exactly one live version per semester, archiving a superseded version, the live version refusing to archive, lecturer change request submission and the one-open-request rule, approval producing a new live version with the moved entry, department-admin scope refusal, lecturer draft invisibility, neighbouring-tenant invisibility, anonymous denial, and activity records for publishing and approval.
+- `npm run lint` — pass, no warnings.
+- `npm run build` — pass; the six institution routes and both personal timetable routes are dynamic.
+- Not verified: no hosted Supabase project is attached, so no screen has been exercised signed in; the grid has not been driven in a browser.
+
 ## 6. Project structure
 
 ```
@@ -305,7 +355,7 @@ acadence/
 | 3 | FR-INST-001…010 | `/institution/*`, `/platform/institutions*` |
 | 4 | FR-ACAD-001…012 | `/institution/academics/*` |
 | 5 | FR-ROOM-001…007 | `/institution/facilities*` |
-| 6 | FR-TT-001…012 | `/department/timetables`, `/lecturer/timetable`, `/student/timetable` |
+| 6 | FR-TT-001…012 | `/institution/timetables*`, `/lecturer/timetable`, `/student/timetable` |
 | 7 | FR-CONF-001…010 | conflict report, publish dialog |
 | 8 | FR-GEN-001…006 | generation run screens |
 | 9 | FR-WL-001…004 | `/department/workloads` |
@@ -326,3 +376,4 @@ acadence/
 | 1.6 | 2026-11-27 | Engineering | Phase 5 buildings, rooms, feature catalogue, binding availability, non-overlapping bookings and the utilisation report reported complete pending approval |
 | 1.7 | 2026-11-27 | Engineering | Utilisation numerator clipped to the teaching-day availability used by the denominator, with out-of-scope bookings reported as excluded; Phase 5 committed |
 | 1.8 | 2026-11-27 | Engineering | Phase 5 merged to `main` |
+| 1.9 | 2026-11-28 | Engineering | Phase 6 timetable drafts, grid editing, publication, immutable versions, scoped views, import and change requests reported complete pending approval |

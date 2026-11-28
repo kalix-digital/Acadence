@@ -1,6 +1,6 @@
 # Acadence — Database Design
 
-> **Document ID:** DBD-001 · **Version:** 1.4 · **Status:** Approved for migration authoring · **Date:** 2026-11-27 · **Owner:** Database Architecture
+> **Document ID:** DBD-001 · **Version:** 1.5 · **Status:** Approved for migration authoring · **Date:** 2026-11-28 · **Owner:** Database Architecture
 > **Related:** [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [SRS](../03-requirements/SRS.md) · [API](../06-api/API_SPECIFICATION.md) · [ADR-003](../13-adr/ADR-003-rls-multi-tenancy.md)
 
 ## 1. Principles
@@ -23,6 +23,7 @@
 | `room_type` | `classroom`, `lecture_hall`, `laboratory`, `studio`, `seminar` (identical to `courses.required_room_type`) |
 | `booking_status` | `confirmed`, `cancelled` |
 | `timetable_status` | `draft`, `validated`, `published`, `superseded`, `archived` |
+| `change_request_status` | `pending`, `approved`, `rejected`, `withdrawn` |
 | `conflict_severity` | `critical`, `high`, `medium`, `low` |
 | `conflict_kind` | `lecturer_overlap`, `room_overlap`, `group_overlap`, `capacity`, `suitability`, `lecturer_unavailable`, `workload`, `calendar` |
 | `workload_status` | `draft`, `submitted`, `approved`, `rejected` |
@@ -136,10 +137,10 @@ erDiagram
 
 | Table | Key columns | Constraints |
 | --- | --- | --- |
-| `timetable_drafts` | `id`, `institution_id`, `semester_id`, `department_id`, `faculty_id`, `title`, `status`, `created_by` | Exactly one of department/faculty may be set at a time (CHECK) |
-| `timetable_versions` | `id`, `institution_id`, `semester_id`, `draft_id`, `version_no`, `status`, `published_at`, `published_by`, `change_summary`, `validation_report jsonb` | `unique (semester_id, version_no)`; partial unique `(semester_id) WHERE status = 'published'` ensures one live version |
-| `timetable_entries` | `id`, `institution_id`, `version_id`, `offering_id`, `room_id`, `lecturer_id`, `group_id`, `day_of_week`, `starts_at time`, `ends_at time`, `is_fixed`, `notes` | Overlap exclusions (§5); `ends_at > starts_at` |
-| `timetable_change_requests` | `id`, `institution_id`, `entry_id`, `requested_by`, `proposed jsonb`, `reason`, `status`, `reviewed_by`, `reviewed_at`, `review_note` | Only open requests per entry allowed |
+| `timetable_drafts` | `id`, `institution_id`, `semester_id`, `department_id`, `faculty_id`, `title`, `status`, `created_by`, `archived_at` | At most one of department/faculty; both null means institution-wide (OQ-033). Title unique per semester while active; drafts stay editable after publishing, the version is the snapshot |
+| `timetable_versions` | `id`, `institution_id`, `semester_id`, `draft_id`, `version_no`, `status`, `change_summary`, `validation_report jsonb`, `published_at`, `published_by`, `archived_at` | `unique (semester_id, version_no)`; partial unique `(semester_id) WHERE status = 'published'` keeps one live version; written only by the publish function |
+| `timetable_entries` | `id`, `institution_id`, `draft_id`, `version_id`, `department_id`, `offering_id`, `lecturer_id`, `room_id`, `group_id`, `day_of_week`, `starts_at time`, `ends_at time`, `is_fixed`, `notes` | Exactly one container (`num_nonnulls(draft_id, version_id) = 1`); `ends_at > starts_at`; overlap exclusions per container (§5); offering optional only for fixed entries; published rows immutable by trigger and RLS (OQ-032) |
+| `timetable_change_requests` | `id`, `institution_id`, `entry_id`, `requested_by`, `proposed jsonb`, `reason`, `status`, `reviewed_by`, `reviewed_at`, `review_note`, `created_version_id` | One `pending` request per entry (partial unique); `proposed` holds the day, times and optional room; written only through the definer functions (OQ-036) |
 
 ### 4.5 Workload, calendar, attendance
 
@@ -183,7 +184,10 @@ alter table room_bookings
 -- by the validate_room_booking trigger before the row is written, because they
 -- need to read rooms and room_availability, which an exclusion constraint cannot.
 
--- Within a version: no lecturer, room or group may be double-booked.
+-- Within a draft and within a version: no lecturer, room or group may be
+-- double-booked (implemented in 20261128120000_timetables.sql). Publishing
+-- copies both sides into the new version, so a clash across two publishing
+-- scopes is rejected by the same constraints.
 alter table timetable_entries
   add constraint no_lecturer_overlap
   exclude using gist (
@@ -212,9 +216,9 @@ alter table timetable_entries
   ) where (group_id is not null);
 ```
 
-Requires `create extension if not exists btree_gist;`.
+Requires `create extension if not exists btree_gist;` and the `timerange` type over `time`.
 
-Publishing is a single transaction that (a) re-validates the draft, (b) marks the previous published version `superseded`, and (c) inserts the new version with `status = 'published'`. The partial unique index plus `serializable` isolation prevents two simultaneous publications.
+Publishing is one function call, `publish_timetable_draft(draft_id, summary, report)`, run as a single transaction: it locks the live version, re-validates the draft, marks the previous published version `superseded`, inserts the new version with `status = 'published'`, and copies the live rows outside the draft's scope plus the draft's rows. The partial unique index and the version-entry exclusions are checked in that same transaction, so two simultaneous publications cannot both win, and a failure leaves no new version behind.
 
 ## 6. Indexing
 
@@ -328,3 +332,4 @@ Phase 3 extends this with `supabase/tests/institution_management.sql`: invitatio
 | 1.2 | 2026-11-25 | Engineering | Phase 4 academic structure: optional campus on faculties, composite tenant FKs, `programme_courses` replacing `courses.programme_id`, archive-only removal and the academic scope helper |
 | 1.3 | 2026-11-27 | Engineering | Phase 4b people, groups, offerings and calendar tables, the `semesters` tenant-session key and derived teaching weeks |
 | 1.4 | 2026-11-27 | Engineering | Phase 5 facilities: corrected `room_type` and added `booking_status`; buildings, rooms, feature catalogue, links, binding availability, dated bookings with the confirmed-only overlap exclusion and the facilities scope helper |
+| 1.5 | 2026-11-28 | Engineering | Phase 6 timetables: `timetable_status` and `change_request_status`, scoped drafts, one live version per semester, entries with draft-or-version containers and six overlap exclusions, change requests, the publish/duplicate/review functions and the timetable scope helper |

@@ -441,6 +441,74 @@ export type RoomBookingRow = {
   updated_at: string;
 };
 
+export type TimetableStatus = "draft" | "validated" | "published" | "superseded" | "archived";
+export type ChangeRequestStatus = "pending" | "approved" | "rejected" | "withdrawn";
+
+export type TimetableDraftRow = {
+  id: string;
+  institution_id: string;
+  semester_id: string;
+  department_id: string | null;
+  faculty_id: string | null;
+  title: string;
+  status: TimetableStatus;
+  created_by: string | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TimetableVersionRow = {
+  id: string;
+  institution_id: string;
+  semester_id: string;
+  draft_id: string | null;
+  version_no: number;
+  status: TimetableStatus;
+  change_summary: string;
+  validation_report: Record<string, unknown>;
+  published_at: string;
+  published_by: string | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TimetableEntryRow = {
+  id: string;
+  institution_id: string;
+  draft_id: string | null;
+  version_id: string | null;
+  department_id: string | null;
+  offering_id: string | null;
+  lecturer_id: string | null;
+  room_id: string | null;
+  group_id: string | null;
+  day_of_week: number;
+  starts_at: string;
+  ends_at: string;
+  is_fixed: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TimetableChangeRequestRow = {
+  id: string;
+  institution_id: string;
+  entry_id: string;
+  requested_by: string | null;
+  proposed: Record<string, unknown>;
+  reason: string;
+  status: ChangeRequestStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+  created_version_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type Table<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
   Row: Row;
   Insert: Insert;
@@ -479,6 +547,10 @@ export type Database = {
       room_feature_links: Table<RoomFeatureLinkRow>;
       room_availability: Table<RoomAvailabilityRow>;
       room_bookings: Table<RoomBookingRow>;
+      timetable_drafts: Table<TimetableDraftRow>;
+      timetable_versions: Table<TimetableVersionRow>;
+      timetable_entries: Table<TimetableEntryRow>;
+      timetable_change_requests: Table<TimetableChangeRequestRow>;
     };
     Views: Record<string, never>;
     Functions: {
@@ -534,6 +606,31 @@ export type Database = {
         Returns: boolean;
       };
       room_capacity: { Args: { p_room: string }; Returns: number | null };
+      auth_can_manage_timetables: {
+        Args: { p_institution: string; p_department?: string | null; p_faculty?: string | null };
+        Returns: boolean;
+      };
+      publish_timetable_draft: {
+        Args: { p_draft_id: string; p_change_summary?: string | null; p_report?: Record<string, unknown> };
+        Returns: string;
+      };
+      archive_timetable_version: { Args: { p_version_id: string }; Returns: undefined };
+      duplicate_timetable_draft: {
+        Args: { p_draft_id: string; p_semester_id: string; p_title: string };
+        Returns: {
+          draft_id: string;
+          copied: number;
+          skipped: { entry: string; reason: string }[];
+        };
+      };
+      submit_timetable_change_request: {
+        Args: { p_entry_id: string; p_proposed: Record<string, unknown>; p_reason: string };
+        Returns: string;
+      };
+      review_timetable_change_request: {
+        Args: { p_request_id: string; p_approve: boolean; p_note?: string | null };
+        Returns: string | null;
+      };
     };
     Enums: {
       institution_status: InstitutionStatus;
@@ -546,6 +643,8 @@ export type Database = {
       calendar_event_kind: CalendarEventKind;
       room_type: RoomType;
       booking_status: BookingStatus;
+      timetable_status: TimetableStatus;
+      change_request_status: ChangeRequestStatus;
     };
     CompositeTypes: Record<string, never>;
   };

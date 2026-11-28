@@ -1,6 +1,6 @@
 # Acadence — API Specification
 
-> **Document ID:** API-001 · **Version:** 1.4 · **Status:** Approved conventions · **Date:** 2026-11-27 · **Owner:** Engineering
+> **Document ID:** API-001 · **Version:** 1.5 · **Status:** Approved conventions · **Date:** 2026-11-28 · **Owner:** Engineering
 > **Related:** [Architecture](../04-architecture/SYSTEM_ARCHITECTURE.md) · [Database](../05-database/DATABASE_DESIGN.md) · [SRS](../03-requirements/SRS.md)
 
 ## 1. Surfaces
@@ -140,7 +140,7 @@ Phase 5 is implemented as Next.js Server Actions, like Phases 3–4b: `saveFacil
 | `PATCH` | `/api/v1/institutions/{id}/timetables/change-requests/{requestId}` | faculty/institution admin | Approve/reject |
 | `GET` | `/api/v1/institutions/{id}/conflicts?draftId=&versionId=` | scoped admin | Conflict report |
 
-Publishing response includes the new version, validation summary and notification job id. A blocked publication returns `HARD_CONSTRAINT_VIOLATION` with the conflict list — never a partial publish.
+Phase 6 is implemented as Next.js Server Actions plus database functions, like the earlier phases. `saveTimetableDraftAction`, `saveTimetableEntryAction` and `deleteTimetableEntryAction` cover drafts and entries; `moveTimetableEntryAction` performs a drag-and-drop move; `publishTimetableAction` validates first and then calls `publish_timetable_draft`, which supersedes the live version, inserts the next version and copies both the draft's rows and the live rows outside the draft's scope in one transaction; `duplicateTimetableDraftAction` calls the code-matching copy function and reports skipped rows; `archiveTimetableVersionAction` retires a superseded version; `importTimetableEntriesAction` runs the dry run and the all-or-nothing commit. Change requests use `submit_timetable_change_request` and `review_timetable_change_request`; approval applies the proposal to a fresh department draft of the live version and publishes the result, recording the request as the change summary. A blocked publication lists every hard issue found and never writes a partial version.
 
 ### 3.5 Generation and workload (Phases 8–9)
 
